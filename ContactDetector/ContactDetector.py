@@ -188,6 +188,8 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.selected_markup_index = None
         self.result_markup_node = None
 
+        self.wait_for_storage_node = False
+
     def setup(self) -> None:
         """Called when the user opens the module the first time and the widget is initialized."""
         ScriptedLoadableModuleWidget.setup(self)
@@ -444,9 +446,12 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.onRenderingDisabledClicked()
             self.ui.radioButtonRenderingDisabled.setChecked(True)
 
-            if self._parameterNode.saveBrainMask:
-                ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
-                self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "BETmask.seg.nrrd")
+            if self._parameterNode.inputCT.GetStorageNode():
+                if self._parameterNode.saveBrainMask:
+                    ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
+                    self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "BETmask.seg.nrrd")
+            else:
+                self.wait_for_storage_node = True
 
     def onDisplayCTClicked(self):
         slicer.util.setSliceViewerLayers(background = self._parameterNode.inputCT)
@@ -515,8 +520,6 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.ui.pathLineEditBrainMask.setEnabled(True)
             self.ui.buttonCreateBrainMask.setToolTip("")
             self.ui.pathLineEditBrainMask.setToolTip("")
-            ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
-            self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "BETmask.seg.nrrd")
 
         # disable rendering buttons and slice views if CT is not selected
         if self._parameterNode.inputCT is None:
@@ -555,16 +558,25 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # add observer for changing control point label
         if self.lastSelectedBoltFiducials is not None:
             self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
+            self.lastSelectedBoltFiducials = None
 
         if self._parameterNode.boltFiducials is not None:
             self.lastSelectedBoltFiducials = self._parameterNode.boltFiducials
             self.addObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
-            
+    
+    def volumeModified(self, caller, event):
+        if self.wait_for_storage_node:
+            if self._parameterNode.saveBrainMask and self._parameterNode.inputCT.GetStorageNode():
+                self.wait_for_storage_node = False
+                ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
+                self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "BETmask.seg.nrrd")
+
     @vtk.calldata_type(vtk.VTK_OBJECT)
     def onNodeAdded(self, caller, event,  node):
-        # Eevery time a new node is added to the scene check if it's input node
+        # Every time a new node is added to the scene check if it's input node
         if "ct" in node.GetName().lower() and isinstance(node, ContactDetectorParameterNode.__annotations__['inputCT']):
             self._parameterNode.inputCT = node
+            self._parameterNode.inputCT.AddObserver(vtk.vtkCommand.ModifiedEvent, self.volumeModified)
 
         if "t1" in node.GetName().lower() and isinstance(node, ContactDetectorParameterNode.__annotations__['inputT1']):
             self._parameterNode.inputT1 = node
@@ -931,7 +943,9 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
             pca_centroid_ijk = pca.mean_
 
             # check pca_v_ijk direction is pointing inside the skull
-            brain_center_ijk = brainMask.GetSegmentCenter(brainMask.GetSegmentation().GetSegmentIDs()[0])
+            brain_center_ras = brainMask.GetSegmentCenterRAS(brainMask.GetSegmentation().GetSegmentIDs()[0])
+            brain_center_ijk = self.RAS_to_IJK(brain_center_ras, inputCT)[::-1]
+
             vector_to_center = brain_center_ijk - pca_centroid_ijk
             if np.dot(vector_to_center, pca_v_ijk) < 0:
                 pca_v_ijk = -pca_v_ijk

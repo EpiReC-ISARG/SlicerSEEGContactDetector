@@ -483,8 +483,7 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             parameters["movingVolume"] = movingVolumeNode.GetID()
             parameters["linearTransform"] = transformNode.GetID()
             parameters["useRigid"] = True
-            parameters["initializeTransformMode"] = "useMomentsAlign"
-            parameters["samplingPercentage"] = 0.002
+            parameters["initializeTransformMode"] = "useGeometryAlign"
             cliBrainsFitRigidNode = slicer.cli.run(slicer.modules.brainsfit, None, parameters, wait_for_completion=True)
 
             # run HD-BET

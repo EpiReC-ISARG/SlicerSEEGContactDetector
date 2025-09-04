@@ -237,49 +237,81 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.buttonBoltAxisEst.connect("clicked(bool)", self.onBoltAxisEstClicked)
         self.ui.buttonElectrodeSegmentation.connect("clicked(bool)", self.onElectrodeSegmentationClicked)
         self.ui.buttonCurveFitting.connect("clicked(bool)", self.onCurveFittingClicked)
-        self.ui.buttonBulkProcessing.connect("clicked(bool)", self.onBulkProcessingClicked)
+        self.ui.buttonBulkBrainMask.connect("clicked(bool)", self.onBulkBrainMaskClicked)
+        self.ui.buttonBulkRun.connect("clicked(bool)", self.onBulkRun)
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
 
-    def onBulkProcessingClicked(self):
-        input_dir = self.ui.pathLineEditBulkProcessing.currentPath
+    def onBulkBrainMaskClicked(self):
+        # generate brain mask for all CTs
+        input_dir = self.ui.pathLineEditBulkProcessing.currentPath        
+        n=0
         for root, dirs, files in os.walk(input_dir):
             ct_path = None
             t1_path = None
-            fcsv_path = None
 
             for file in files:
                 if "CT" in file and file.endswith((".nii", ".nii.gz")):
                     ct_path = file
                 elif "T1" in file and file.startswith("rand_affine_") and file.endswith((".nii", ".nii.gz")):
                     t1_path = file
-                elif file == "BoltFiducials.fcsv":
-                    fcsv_path = file
-            if ct_path and t1_path and fcsv_path:
-                print(f"Processing: {root}")
+            if ct_path and t1_path:
+                n += 1
+                print(f"{n}: Generating brain mask: {root}")
 
                 # load images
                 ct = slicer.util.loadVolume(os.path.join(root, ct_path))
                 t1 = slicer.util.loadVolume(os.path.join(root, t1_path))
-                fiducials = slicer.util.loadMarkups(os.path.join(root, fcsv_path))
 
-                # run contact detector
+                # generate brain mask - it is automatically saved
                 self.onCreateBrainMaskClicked()
+
+                # cleanup
+                slicer.mrmlScene.RemoveNode(slicer.util.getNode("CT brain mask"))
+                slicer.mrmlScene.RemoveNode(slicer.util.getNode("Transform*"))
+                slicer.mrmlScene.RemoveNode(ct)
+                slicer.mrmlScene.RemoveNode(t1)
+        print(f"Brain mask generation is done")
+
+    def onBulkRun(self):
+        # estimate contacts for all CTs
+        input_dir = self.ui.pathLineEditBulkProcessing.currentPath
+        n=0
+        for root, dirs, files in os.walk(input_dir):
+            ct_path = None
+            brain_mask_path = None
+            fiducials_path = None
+
+            for file in files:
+                if "CT" in file and file.endswith((".nii", ".nii.gz")):
+                    ct_path = file
+                elif file == "BETmask.seg.nrrd":
+                    brain_mask_path = file
+                elif file == "BoltFiducials.fcsv":
+                    fiducials_path = file
+            if ct_path and fiducials_path and brain_mask_path:
+                n += 1
+                print(f"{n}: Estimating contacts: {root}")
+
+                # load images
+                ct = slicer.util.loadVolume(os.path.join(root, ct_path))
+                brain_mask = slicer.util.loadSegmentation(os.path.join(root, brain_mask_path))
+                fiducials = slicer.util.loadMarkups(os.path.join(root, fiducials_path))
+
+                # generate brain mask - it is automatically saved
                 self.onRunClicked()
 
                 # save results
                 estimated_contacts = slicer.util.getNode("Electrodes")
-                slicer.util.saveNode(estimated_contacts, os.path.join(root, "EstimatedContacts.json"))
+                slicer.util.saveNode(estimated_contacts, os.path.join(root, "ContactDetector.mrk.json"))
 
                 # cleanup
-                slicer.mrmlScene.RemoveNode(slicer.util.getNode("CT brain mask"))
-                slicer.mrmlScene.RemoveNode(slicer.util.getNode("Transform"))
                 slicer.mrmlScene.RemoveNode(estimated_contacts)
                 slicer.mrmlScene.RemoveNode(ct)
-                slicer.mrmlScene.RemoveNode(t1)
+                slicer.mrmlScene.RemoveNode(brain_mask)
                 slicer.mrmlScene.RemoveNode(fiducials)
-                break
+        print(f"Contacts estimation is done")
 
     def onRunClicked(self):
         progressbar = slicer.util.createProgressDialog(windowTitle="Detecting contacts")

@@ -123,7 +123,7 @@ class ContactDetectorParameterNode:
     contactLength_mm: Annotated[float, WithinRange(0.1, 100)] = 2
     contactGap_mm: Annotated[float, WithinRange(0.1, 100)] = 1.5
     contactDiameter_mm: Annotated[float, WithinRange(0.1, 100)] = 0.8
-    boltSphereRadius_mm: Annotated[float, WithinRange(0.1, 100)] = 10
+    boltSphereRadius_mm: Annotated[float, WithinRange(0.1, 100)] = 5
     blobSize_sigma: Annotated[float, WithinRange(0.1, 100)] = 3
 
     # developerMode
@@ -412,6 +412,7 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                                                              self._parameterNode.contactDiameter_mm,
                                                              self._parameterNode.contactLength_mm,
                                                              self._parameterNode.contactGap_mm,
+                                                             self._parameterNode.metalThreshold_HU,
                                                              self._parameterNode.gaussianBalls)
         
         # collapse collapsibleButtonInputBoltFiducials and make visible output collapsible button
@@ -432,6 +433,7 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.logic.eletrode_segmentation(self._parameterNode.inputCT,
                                              self._parameterNode.brainMask,
                                              self.electrodes,
+                                             self._parameterNode.contactDiameter_mm,
                                              self._parameterNode.metalThreshold_HU,
                                              self._parameterNode.electrodeSegmentation)
 
@@ -555,6 +557,7 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             parameters["movingVolume"] = movingVolumeNode.GetID()
             parameters["linearTransform"] = transformNode.GetID()
             parameters["useRigid"] = True
+            parameters["samplingPercentage"] = 0.01
             parameters["initializeTransformMode"] = "useGeometryAlign"
             cliBrainsFitRigidNode = slicer.cli.run(slicer.modules.brainsfit, None, parameters, wait_for_completion=True)
 
@@ -770,8 +773,15 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
             contact_diameter_mm: float,
             contact_length_mm: float,
             contact_gap_mm: float,
+            metal_threshold: float,
             show_gaussian_balls: bool):
         # import or install dependencies
+        try:
+            import scipy
+        except ModuleNotFoundError:
+            if slicer.util.confirmOkCancelDisplay("This module requires 'scipy' Python package. Click OK to install it now."):
+                slicer.util.pip_install("scipy")
+                import scipy
         try:
             from sklearn.decomposition import PCA
         except ModuleNotFoundError:
@@ -780,7 +790,11 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
                 from sklearn.decomposition import PCA
 
         # prepare data array
-        ct_array = slicer.util.arrayFromVolume(inputCT)
+        ct_array = slicer.util.arrayFromVolume(inputCT).copy()
+
+        # compute size of the median filter
+        filter_size_ijk = np.ceil(contact_diameter_mm / np.array(inputCT.GetSpacing())[::-1]).astype(int)
+        ct_array_avg = scipy.ndimage.uniform_filter(ct_array, size=filter_size_ijk)
 
         # precompute gaussian ball
         sigma_mm = contact_diameter_mm
@@ -796,8 +810,16 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
         markupsNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
         markupsNode.SetName("Electrodes")
 
+        # get number of points to fit
+        n = np.ceil((contact_length_mm + contact_gap_mm) / 0.1).astype(int)
+
         for electrode in electrodes:
             slicer.app.processEvents()
+
+            # get all electrode.gmm_segmentation_indices_ijk < metal and replace with average
+            non_metal = ct_array[electrode.gmm_segmentation_indices_ijk[:, 0], electrode.gmm_segmentation_indices_ijk[:, 1], electrode.gmm_segmentation_indices_ijk[:, 2]] < metal_threshold
+            non_metal = electrode.gmm_segmentation_indices_ijk[non_metal]
+            ct_array[non_metal[:, 0], non_metal[:, 1], non_metal[:, 2]] = ct_array_avg[non_metal[:, 0], non_metal[:, 1], non_metal[:, 2]]
             
             # find the direction of the maximum variance
             pca = PCA(n_components=1)
@@ -835,21 +857,30 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
             electrode.curve_points = np.column_stack((x_fit, y_fit, z_fit))
             
             # remove points that are outside of the image
-            in_image = np.all((electrode.curve_points >= 0) & (electrode.curve_points < np.array(ct_array.shape)), axis=1)
+            in_image = np.all((np.round(electrode.curve_points) >= 0) & (np.round(electrode.curve_points) < np.array(ct_array.shape)), axis=1)
             electrode.curve_points = electrode.curve_points[in_image]
 
             # compute distance between points on the curve
             diffs_mm = np.diff(electrode.curve_points * inputCT.GetSpacing()[::-1], axis=0)
             curve_distances_between_points_mm = np.linalg.norm(diffs_mm, axis=1)
             electrode.curve_cumulative_distances_mm = np.cumsum(curve_distances_between_points_mm)
-            
-            # get number of points to fit
-            n = np.ceil(4*(contact_length_mm + contact_gap_mm) / 0.1).astype(int)
-            n = len(electrode.curve_points)-1 if n > len(electrode.curve_points)-1 else n
 
+            # find the best offset: i.e. the first offset where are all contacts on the metal
+            all_contacts_on_metal = False
+            default_offset = -1
+            while not all_contacts_on_metal:
+                default_offset += 1
+                selected_points = self.select_contact_points(electrode, contact_length_mm, contact_gap_mm, default_offset)
+                points_ijk = np.round(selected_points).astype(int)
+                all_contacts_on_metal = np.all(ct_array[points_ijk[:, 0], points_ijk[:, 1], points_ijk[:, 2]] >= metal_threshold)
+
+                if default_offset + n >= len(electrode.curve_cumulative_distances_mm):
+                    break
+            
+            # find the best fit
             best_fit = -np.inf
             best_gaussian = None
-            for offset in range(n):
+            for offset in range(default_offset, default_offset + n):
                 slicer.app.processEvents()
 
                 # select points from the fitted curve
@@ -923,9 +954,16 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
                               inputCT: vtkMRMLScalarVolumeNode, 
                               brainMask: vtkMRMLSegmentationNode,
                               electrodes: list[Electrode],
+                              contact_diameter_mm: float,
                               metal_threshold: float,
                               add_segmentation: bool):
         # import or install dependencies
+        try:
+            import scipy
+        except ModuleNotFoundError:
+            if slicer.util.confirmOkCancelDisplay("This module requires 'scipy' Python package. Click OK to install it now."):
+                slicer.util.pip_install("scipy")
+                import scipy
         try:
             from sklearn.mixture import GaussianMixture
         except ModuleNotFoundError:
@@ -976,11 +1014,33 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
             segmentationNode.SetReferenceImageGeometryParameterFromVolumeNode(inputCT)
             segmentationNode.CreateDefaultDisplayNodes()
        
+        # prepare binary closing
+        struct26 = scipy.ndimage.generate_binary_structure(3, 2) # 26-neighborhood
+        n_iterations = np.ceil(contact_diameter_mm / 2 / np.min(inputCT.GetSpacing()) / 2).astype(int)
+
         # assign gmm labels
-        for idx, electrode in enumerate(electrodes):
+        for electrode_idx, electrode in enumerate(electrodes):
             slicer.app.processEvents()
-            electrode.gmm_segmentation_indices_ijk = points[labels == idx]
+
+            # get points for current electrode from gmm segmentation
+            electrode_points = points[labels == electrode_idx]
+
+            min_voxel = np.min(electrode_points, axis=0)
+            max_voxel = np.max(electrode_points, axis=0)
+
+            bbox_min = np.maximum(min_voxel - n_iterations, 0) # extend by n_iterations because of dilation
+            bbox_max = np.minimum(max_voxel + n_iterations + 1, ct_array.shape)
+
+            gmm_cropped = np.zeros(bbox_max - bbox_min, dtype=np.int8)
+            i,j,k = (electrode_points - bbox_min).T
+            gmm_cropped[i,j,k] = 1
+
+            # dilatate and erode to remove voids inside the contact blob
+            gmm_volume_array = scipy.ndimage.binary_closing(gmm_cropped, structure=struct26, iterations=n_iterations).astype(np.int8)
             
+            # save indices of the electrode segmentation
+            electrode.gmm_segmentation_indices_ijk = np.array(np.nonzero(gmm_volume_array)).T + bbox_min
+
             if add_segmentation:
                 # prepare array with electrode segmentation
                 gmm_volume_array = np.zeros_like(ct_array, dtype=np.int8)
@@ -1004,6 +1064,8 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
                 slicer.util.pip_install("scikit-learn")
                 from sklearn.decomposition import PCA
 
+        brain_mask_array = slicer.util.arrayFromSegmentBinaryLabelmap(brainMask, brainMask.GetSegmentation().GetSegmentIDs()[0], inputCT)
+
         for electrode in electrodes:
             slicer.app.processEvents()
             
@@ -1012,14 +1074,6 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
             pca.fit(electrode.bolt_segmentation_indices_ijk)
             pca_v_ijk = pca.components_[0]
             pca_centroid_ijk = pca.mean_
-
-            # check pca_v_ijk direction is pointing inside the skull
-            brain_center_ras = brainMask.GetSegmentCenterRAS(brainMask.GetSegmentation().GetSegmentIDs()[0])
-            brain_center_ijk = self.RAS_to_IJK(brain_center_ras, inputCT)[::-1]
-
-            vector_to_center = brain_center_ijk - pca_centroid_ijk
-            if np.dot(vector_to_center, pca_v_ijk) < 0:
-                pca_v_ijk = -pca_v_ijk
 
             # entry point of the electrode is a projection of the tip of the bolt to the bolt axis
             w = self.RAS_to_IJK(electrode.bolt_tip_ras, inputCT)[::-1] - pca_centroid_ijk
@@ -1031,7 +1085,13 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
             norm_factor = np.linalg.norm(voxel_spacing * pca_v_ijk) # length of the PCA unit vector in mm
             offset_ijk = (pca_v_ijk * electrode.length_mm) / norm_factor
 
-            electrode.tip_ijk = electrode.entry_point_ijk + offset_ijk
+            # check if orientation of the offset is pointing into the brain
+            x, y, z = np.round(electrode.entry_point_ijk + offset_ijk).astype(int)
+            in_brain = (0 <= x < brain_mask_array.shape[0] and
+                        0 <= y < brain_mask_array.shape[1] and
+                        0 <= z < brain_mask_array.shape[2] and
+                        brain_mask_array[x, y, z] == 1)
+            electrode.tip_ijk = electrode.entry_point_ijk + offset_ijk if in_brain else electrode.entry_point_ijk - offset_ijk
 
             # if tip fiducial is provided, adjust entry point accordingly
             if electrode.tip_ras is not None:

@@ -14,7 +14,7 @@
 
 # Visualization
 - [x] debug checkbox to enable visualization
-- [ ] compute distance between gmm centroids and throw warning if one distance is out of tolerance
+- [ ] throw error when contact intensity is lower than metal threshold
 
 # Debugging
 - [x] check centers of the spheres and of the gaussinan balls
@@ -25,6 +25,11 @@
 - [x] fix error when extending the curve outside of the image / moving the electrode outside of the image
 - [x] critical error when shifting contacts after renaming estimated contacts
 - [ ] cannot make window smaller due to the minimum size of the widgets => make Inputs buttons in vertical layout?
+- [x] change estimation of the electrode axis orientation
+- [ ] too small sphere radius around the bolt -> curve fitting throws warning
+- [x] start without extending the curve
+- [ ] ras tip fiducial naming C1-no to C1
+- [ ] save CT brain mask path is missing when T1 and CT are loaded outside of the module
 
 # Finalization
 - [x] add parameters into the parameter node and check scene saving
@@ -32,13 +37,14 @@
 - [ ] create tooltip help
 - [ ] add module description, help and acknowledgement
 - [ ] icon
+- [ ] mrml scene (ocean, etc)
 
 # Testing
 - [x] prepare dataset
-- [ ] apply dummy affine transform to the T1
-- [ ] estimate bolt tip as extrapolation of the first and last contact and apply additional random translation away from the axis
-- [ ] evaluation script
-- [ ] batch loading (as a test function?)
+- [x] apply dummy affine transform to the T1
+- [x] estimate bolt tip as extrapolation of the first and last contact and apply additional random translation away from the axis
+- [x] evaluation script
+- [x] batch loading (as a test function?)
 
 # Known issues
 - [x] while fitting the electrode with less than 5 contacts, out of range warning is raised

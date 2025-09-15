@@ -452,9 +452,10 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.onRenderingDisabledClicked()
             self.ui.radioButtonRenderingDisabled.setChecked(True)
 
-            if self._parameterNode.inputCT.GetStorageNode():
+            new_ct = slicer.mrmlScene.GetNodeByID(self.ui.comboBoxCT.currentNodeID)
+            if new_ct and new_ct.GetStorageNode():
                 if self._parameterNode.saveBrainMask:
-                    ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
+                    ct_path = new_ct.GetStorageNode().GetFullNameFromFileName()
                     self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "BETmask.seg.nrrd")
             else:
                 self.wait_for_storage_node = True

@@ -25,10 +25,9 @@
 - [x] critical error when shifting contacts after renaming estimated contacts
 - [ ] cannot make window smaller due to the minimum size of the widgets => make Inputs buttons in vertical layout?
 - [x] change estimation of the electrode axis orientation
-- [ ] too small sphere radius around the bolt -> curve fitting throws warning
 - [x] start without extending the curve
 - [x] ras tip fiducial naming C1-no to C1
-- [ ] save CT brain mask path is missing when T1 and CT are loaded outside of the module
+- [x] save CT brain mask path is missing when T1 and CT are loaded outside of the module
 
 # Finalization
 - [x] add parameters into the parameter node and check scene saving

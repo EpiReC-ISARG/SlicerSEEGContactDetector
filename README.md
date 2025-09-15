@@ -14,7 +14,6 @@
 
 # Visualization
 - [x] debug checkbox to enable visualization
-- [ ] throw error when contact intensity is lower than metal threshold
 
 # Debugging
 - [x] check centers of the spheres and of the gaussinan balls
@@ -28,7 +27,7 @@
 - [x] change estimation of the electrode axis orientation
 - [ ] too small sphere radius around the bolt -> curve fitting throws warning
 - [x] start without extending the curve
-- [ ] ras tip fiducial naming C1-no to C1
+- [x] ras tip fiducial naming C1-no to C1
 - [ ] save CT brain mask path is missing when T1 and CT are loaded outside of the module
 
 # Finalization

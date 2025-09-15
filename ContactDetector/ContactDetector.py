@@ -133,7 +133,7 @@ class ContactDetectorParameterNode:
     gaussianBalls: bool
 
 class Electrode():
-    def __init__(self, bolt_tip_ras, label, contact_length_mm, contact_gap_mm, tip_ras=None):
+    def __init__(self, bolt_tip_ras, label, contact_length_mm, contact_gap_mm):
         self.bolt_tip_ras = np.array(bolt_tip_ras) # tip of the bolt in RAS
         self.label = label # full label, e.g., A-1, B-2, etc
         self.label_prefix, self.n_contacts = Electrode.split_label(label) # A, 1
@@ -141,7 +141,8 @@ class Electrode():
         
         self.bolt_segmentation_indices_ijk = None # indices of the bolt segmentation in IJK
 
-        self.tip_ras = tip_ras
+        self.manual_tip = False
+        self.tip_ras = None
         self.tip_ijk = None # tip of the electrode in IJK
         self.entry_point_ijk = None # entry point of the electrode in IJK
         self.gmm_segmentation_indices_ijk = None # indices of the electrode segmentation in IJK
@@ -156,12 +157,8 @@ class Electrode():
     @staticmethod
     def split_label(electrode_name):
         parts = electrode_name.split('-')
-        if len(parts) < 2:
-            slicer.util.errorDisplay(f"Electrode label {electrode_name} is not in the correct format. It should be in the format '<label>-<number>'.")
-            raise ValueError
-        if parts[-1].isdigit() == False:
-            slicer.util.errorDisplay(f"Electrode label {electrode_name} is not in the correct format. The part after '-' should be a number indicating the number of contacts.")
-            raise ValueError
+        if len(parts) != 2 or parts[-1].isdigit() == False:
+            return False
         return '-'.join(parts[:-1]), int(parts[-1])
 
 #
@@ -375,29 +372,36 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def onBoltSegmentationClicked(self):
         # load electrodes
         self.electrodes = []
+        electrode_prefixes = []
+
+        # find all electrodes with correct label
         for i in range(self._parameterNode.boltFiducials.GetNumberOfControlPoints()):
             bolt_tip_ras = [0, 0, 0]
             self._parameterNode.boltFiducials.GetNthControlPointPosition(i, bolt_tip_ras)
-
-            # look for the tip of the electrode
             label = self._parameterNode.boltFiducials.GetNthControlPointLabel(i)
-            prefix, n_contacts = Electrode.split_label(label)
-            if prefix[-1] == "1" and self._parameterNode.boltFiducials.GetControlPointIndexByLabel(f"{prefix[:-1]}-{n_contacts}") != -1:
-                # if this is the tip, check if there is a pair with entry point
+
+            if Electrode.split_label(label):
+                prefix, n_contacts = Electrode.split_label(label)
+                self.electrodes.append(Electrode(bolt_tip_ras, label, self._parameterNode.contactLength_mm, self._parameterNode.contactGap_mm))
+                electrode_prefixes.append(prefix)
+            else:
                 continue
 
-            if self._parameterNode.boltFiducials.GetControlPointIndexByLabel(f"{prefix}1-{n_contacts}") != -1:
-                # if tip for this electrode exists
-                tip_ras = [0, 0, 0]
-                tip_index = self._parameterNode.boltFiducials.GetControlPointIndexByLabel(f"{prefix}1-{n_contacts}")
-                self._parameterNode.boltFiducials.GetNthControlPointPosition(tip_index, tip_ras)
-                self.electrodes.append(Electrode(bolt_tip_ras,
-                                                 self._parameterNode.boltFiducials.GetNthControlPointLabel(i),
-                                                 self._parameterNode.contactLength_mm,
-                                                 self._parameterNode.contactGap_mm,
-                                                 tip_ras))
+        # find all electrodes with incorrect label and check if there is a pair with entry point
+        for i in range(self._parameterNode.boltFiducials.GetNumberOfControlPoints()):
+            electrode_tip_ras = [0, 0, 0]
+            self._parameterNode.boltFiducials.GetNthControlPointPosition(i, electrode_tip_ras)
+            label = self._parameterNode.boltFiducials.GetNthControlPointLabel(i)
+
+            if Electrode.split_label(label):
+                continue
+            elif label[-1] == "1" and label[:-1] in electrode_prefixes:
+                electrode_index = electrode_prefixes.index(label[:-1])
+                self.electrodes[electrode_index].tip_ras = electrode_tip_ras
+                self.electrodes[electrode_index].manual_tip = True
             else:
-                self.electrodes.append(Electrode(bolt_tip_ras, self._parameterNode.boltFiducials.GetNthControlPointLabel(i), self._parameterNode.contactLength_mm, self._parameterNode.contactGap_mm))
+                slicer.util.errorDisplay(f"Electrode label {label} is not in the correct format. It should be in the format '<label>-<number>', where <label> is the electrode prefix and <number> is the number of contacts.")
+                raise ValueError
 
         # segment bolts
         with slicer.util.WaitCursor():
@@ -793,17 +797,22 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
             curve_distances_between_points_mm = np.linalg.norm(diffs_mm, axis=1)
             electrode.curve_cumulative_distances_mm = np.cumsum(curve_distances_between_points_mm)
 
+            # use curve points that are closest to the tip as the default offset
+            if electrode.manual_tip:
+                default_offset = np.argmin(np.linalg.norm(electrode.curve_points - electrode.tip_ijk, axis=1))
+            
             # find the best offset: i.e. the first offset where are all contacts on the metal
-            all_contacts_on_metal = False
-            default_offset = -1
-            while not all_contacts_on_metal:
-                default_offset += 1
-                selected_points = self.select_contact_points(electrode, contact_length_mm, contact_gap_mm, default_offset)
-                points_ijk = np.round(selected_points).astype(int)
-                all_contacts_on_metal = np.all(ct_array[points_ijk[:, 0], points_ijk[:, 1], points_ijk[:, 2]] >= metal_threshold)
+            else:
+                all_contacts_on_metal = False
+                default_offset = -1
+                while not all_contacts_on_metal:
+                    default_offset += 1
+                    selected_points = self.select_contact_points(electrode, contact_length_mm, contact_gap_mm, default_offset)
+                    points_ijk = np.round(selected_points).astype(int)
+                    all_contacts_on_metal = np.all(ct_array[points_ijk[:, 0], points_ijk[:, 1], points_ijk[:, 2]] >= metal_threshold)
 
-                if default_offset + n >= len(electrode.curve_cumulative_distances_mm):
-                    break
+                    if default_offset + n >= len(electrode.curve_cumulative_distances_mm):
+                        break
             
             # find the best fit
             best_fit = -np.inf
@@ -996,7 +1005,7 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
 
         for electrode in electrodes:
             slicer.app.processEvents()
-            
+
             # find the best fit line for the electrode
             pca = PCA(n_components=1)
             pca.fit(electrode.bolt_segmentation_indices_ijk)
@@ -1008,22 +1017,24 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
             t = np.dot(w, pca_v_ijk)
             electrode.entry_point_ijk = pca_centroid_ijk + t * pca_v_ijk
 
-            # compute offset of the electrode tip in direction of the bolt
-            voxel_spacing = inputCT.GetSpacing()[::-1]
-            norm_factor = np.linalg.norm(voxel_spacing * pca_v_ijk) # length of the PCA unit vector in mm
-            offset_ijk = (pca_v_ijk * electrode.length_mm) / norm_factor
-
-            # check if orientation of the offset is pointing into the brain
-            x, y, z = np.round(electrode.entry_point_ijk + offset_ijk).astype(int)
-            in_brain = (0 <= x < brain_mask_array.shape[0] and
-                        0 <= y < brain_mask_array.shape[1] and
-                        0 <= z < brain_mask_array.shape[2] and
-                        brain_mask_array[x, y, z] == 1)
-            electrode.tip_ijk = electrode.entry_point_ijk + offset_ijk if in_brain else electrode.entry_point_ijk - offset_ijk
-
-            # if tip fiducial is provided, adjust entry point accordingly
-            if electrode.tip_ras is not None:
+            # if the electrode tip is manually defined
+            if electrode.manual_tip:
                 electrode.tip_ijk = self.RAS_to_IJK(electrode.tip_ras, inputCT)[::-1]
+            
+            # else estimate the electrode tip
+            else:
+                # compute offset of the electrode tip in direction of the bolt
+                voxel_spacing = inputCT.GetSpacing()[::-1]
+                norm_factor = np.linalg.norm(voxel_spacing * pca_v_ijk) # length of the PCA unit vector in mm
+                offset_ijk = (pca_v_ijk * electrode.length_mm) / norm_factor
+
+                # check if orientation of the offset is pointing into the brain
+                x, y, z = np.round(electrode.entry_point_ijk + offset_ijk).astype(int)
+                in_brain = (0 <= x < brain_mask_array.shape[0] and
+                            0 <= y < brain_mask_array.shape[1] and
+                            0 <= z < brain_mask_array.shape[2] and
+                            brain_mask_array[x, y, z] == 1)
+                electrode.tip_ijk = electrode.entry_point_ijk + offset_ijk if in_brain else electrode.entry_point_ijk - offset_ijk
 
             if add_line:
                 lineNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsLineNode")

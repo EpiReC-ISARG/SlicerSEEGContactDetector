@@ -220,7 +220,7 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.spinBoxShiftElectrodeMicrostep.connect('valueChanged(int)', self.onSpinBoxShiftElectrodeMicrostepChanged)
 
         # Buttons
-        self.ui.buttonDisplayCT.connect("clicked(bool)", self.onDisplayCTClicked)
+        self.ui.buttonShowCT.connect("clicked(bool)", self.onShowCTClicked)
         self.ui.buttonCreateBrainMask.connect("clicked(bool)", self.onCreateBrainMaskClicked)
 
         self.ui.radioButtonRenderingMetal.connect("clicked(bool)", self.onRenderingMetalClicked)
@@ -532,7 +532,7 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             else:
                 self.wait_for_storage_node = True
 
-    def onDisplayCTClicked(self):
+    def onShowCTClicked(self):
         slicer.util.setSliceViewerLayers(background = self._parameterNode.inputCT)
         slicer.util.resetSliceViews()
 
@@ -605,14 +605,14 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.ui.collapsibleButtonRendering.setEnabled(False)
             self.ui.collapsibleButtonRendering.setToolTip("Missing CT image")
 
-            self.ui.buttonDisplayCT.setEnabled(False)
-            self.ui.buttonDisplayCT.setToolTip("Missing CT image")
+            self.ui.buttonShowCT.setEnabled(False)
+            self.ui.buttonShowCT.setToolTip("Missing CT image")
         else:
             self.ui.collapsibleButtonRendering.setEnabled(True)
             self.ui.collapsibleButtonRendering.setToolTip("")
 
-            self.ui.buttonDisplayCT.setEnabled(True)
-            self.ui.buttonDisplayCT.setToolTip("")
+            self.ui.buttonShowCT.setEnabled(True)
+            self.ui.buttonShowCT.setToolTip("")
 
         # disable run button if any input is missing
         missing = []

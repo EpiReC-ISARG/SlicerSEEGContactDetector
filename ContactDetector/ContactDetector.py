@@ -229,6 +229,8 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.ui.buttonRun.connect("clicked(bool)", self.onRunClicked)
 
+        self.ui.buttonViewInScene.connect("clicked(bool)", self.onViewInSceneClicked)
+
         # developerMode
         self.ui.buttonBoltSegmentation.connect("clicked(bool)", self.onBoltSegmentationClicked)
         self.ui.buttonBoltAxisEst.connect("clicked(bool)", self.onBoltAxisEstClicked)
@@ -237,6 +239,48 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
+
+    def onViewInSceneClicked(self):
+        with slicer.util.RenderBlocker():
+            if self._parameterNode.inputCT:
+                # get intensity range of inputCT
+                range = self._parameterNode.inputCT.GetImageData().GetScalarRange()
+
+                # setup view and display
+                self.onDisplayCTClicked()
+                self.onRenderingHeadClicked()
+                self.ui.radioButtonRenderingHead.setChecked(True)
+
+                # switch color table to Ocean
+                displayNode = self._parameterNode.inputCT.GetDisplayNode()
+                displayNode.SetAndObserveColorNodeID("vtkMRMLColorTableNodeOcean")
+                
+                # adjust window/level
+                displayNode.AutoWindowLevelOff()
+                displayNode.SetWindowLevelMinMax(self._parameterNode.metalThreshold_HU, range[1])
+
+                # apply threshold
+                displayNode.SetThreshold(self._parameterNode.metalThreshold_HU, range[1])
+                displayNode.ApplyThresholdOn()
+
+            # reset 3D view
+            threeDView = slicer.app.layoutManager().threeDWidget(0).threeDView()
+            threeDView.resetFocalPoint()
+            threeDView.resetCamera() # reset zoom
+            threeDView.rotateToViewAxis(3) # anterior view
+
+            # hide brainMask segmentation
+            if self._parameterNode.brainMask:
+                self._parameterNode.brainMask.SetDisplayVisibility(False)
+
+            # hide bolt fiducials
+            if self._parameterNode.boltFiducials:
+                self._parameterNode.boltFiducials.SetDisplayVisibility(False)
+
+            # show estimated contacts as thick cross
+            if self.result_markup_node:
+                self.result_markup_node.SetDisplayVisibility(True)
+                self.result_markup_node.GetDisplayNode().SetGlyphTypeFromString("ThickCross2D")
 
     def onRunClicked(self):
         progressbar = slicer.util.createProgressDialog(windowTitle="Detecting contacts")

@@ -93,7 +93,7 @@
        </widget>
       </item>
       <item row="0" column="2">
-       <widget class="QPushButton" name="buttonDisplayCT">
+       <widget class="QPushButton" name="buttonShowCT">
         <property name="text">
          <string>Show CT</string>
         </property>

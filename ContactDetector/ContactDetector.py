@@ -246,8 +246,11 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 # get intensity range of inputCT
                 range = self._parameterNode.inputCT.GetImageData().GetScalarRange()
 
-                # setup view and display
-                self.onDisplayCTClicked()
+                # setup view
+                slicer.util.setSliceViewerLayers(background=self._parameterNode.inputT1, foreground=self._parameterNode.inputCT, foregroundOpacity=1)
+                slicer.util.resetSliceViews()
+
+                # enable rendering
                 self.onRenderingHeadClicked()
                 self.ui.radioButtonRenderingHead.setChecked(True)
 

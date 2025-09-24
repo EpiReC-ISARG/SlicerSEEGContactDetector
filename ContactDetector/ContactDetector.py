@@ -229,6 +229,8 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.ui.buttonRun.connect("clicked(bool)", self.onRunClicked)
 
+        self.ui.buttonViewInScene.connect("clicked(bool)", self.onViewInSceneClicked)
+
         # developerMode
         self.ui.buttonBoltSegmentation.connect("clicked(bool)", self.onBoltSegmentationClicked)
         self.ui.buttonBoltAxisEst.connect("clicked(bool)", self.onBoltAxisEstClicked)
@@ -309,6 +311,51 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 slicer.mrmlScene.RemoveNode(brain_mask)
                 slicer.mrmlScene.RemoveNode(fiducials)
         print(f"Contacts estimation is done")
+
+    def onViewInSceneClicked(self):
+        with slicer.util.RenderBlocker():
+            if self._parameterNode.inputCT:
+                # get intensity range of inputCT
+                range = self._parameterNode.inputCT.GetImageData().GetScalarRange()
+
+                # setup view
+                slicer.util.setSliceViewerLayers(background=self._parameterNode.inputT1, foreground=self._parameterNode.inputCT, foregroundOpacity=1)
+                slicer.util.resetSliceViews()
+
+                # enable rendering
+                self.onRenderingHeadClicked()
+                self.ui.radioButtonRenderingHead.setChecked(True)
+
+                # switch color table to Ocean
+                displayNode = self._parameterNode.inputCT.GetDisplayNode()
+                displayNode.SetAndObserveColorNodeID("vtkMRMLColorTableNodeOcean")
+                
+                # adjust window/level
+                displayNode.AutoWindowLevelOff()
+                displayNode.SetWindowLevelMinMax(self._parameterNode.metalThreshold_HU, range[1])
+
+                # apply threshold
+                displayNode.SetThreshold(self._parameterNode.metalThreshold_HU, range[1])
+                displayNode.ApplyThresholdOn()
+
+            # reset 3D view
+            threeDView = slicer.app.layoutManager().threeDWidget(0).threeDView()
+            threeDView.resetFocalPoint()
+            threeDView.resetCamera() # reset zoom
+            threeDView.rotateToViewAxis(3) # anterior view
+
+            # hide brainMask segmentation
+            if self._parameterNode.brainMask:
+                self._parameterNode.brainMask.SetDisplayVisibility(False)
+
+            # hide bolt fiducials
+            if self._parameterNode.boltFiducials:
+                self._parameterNode.boltFiducials.SetDisplayVisibility(False)
+
+            # show estimated contacts as thick cross
+            if self.result_markup_node:
+                self.result_markup_node.SetDisplayVisibility(True)
+                self.result_markup_node.GetDisplayNode().SetGlyphTypeFromString("ThickCross2D")
 
     def onRunClicked(self):
         progressbar = slicer.util.createProgressDialog(windowTitle="Detecting contacts")
@@ -551,9 +598,18 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             fixedVolumeNode = self._parameterNode.inputCT
             movingVolumeNode = self._parameterNode.inputT1
 
-            # Create new nodes for output
-            segmentation = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
-            segmentation.SetName(f"CT brain mask")
+            # create ROI segmentation for registration
+            segmentationNodeROI = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
+            segmentationNodeROI.SetReferenceImageGeometryParameterFromVolumeNode(self._parameterNode.inputCT)
+            segmentationNodeROI.CreateDefaultDisplayNodes()
+            segmentId = segmentationNodeROI.GetSegmentation().AddEmptySegment()
+            segmentationNodeROI.GetSegmentation().GetSegment(segmentId)
+            segmentation_array = (slicer.util.arrayFromVolume(fixedVolumeNode) < self._parameterNode.metalThreshold_HU).astype(np.uint8)
+            slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_array, segmentationNodeROI, segmentId)
+
+            # create new nodes for output
+            segmentationNodeBET = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
+            segmentationNodeBET.SetName(f"CT brain mask")
             transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
 
             # Run registration
@@ -564,22 +620,27 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             parameters["useRigid"] = True
             parameters["samplingPercentage"] = 0.01
             parameters["initializeTransformMode"] = "useGeometryAlign"
+            parameters["maskProcessingMode"] = "ROI"
+            parameters["fixedBinaryVolume"] = segmentationNodeROI.GetID()
             cliBrainsFitRigidNode = slicer.cli.run(slicer.modules.brainsfit, None, parameters, wait_for_completion=True)
+
+            # remove ROI segmentation
+            slicer.mrmlScene.RemoveNode(segmentationNodeROI)
 
             # run HD-BET
             import HDBrainExtractionTool as hd_bet
             hd_bet_logic = hd_bet.HDBrainExtractionToolLogic()
             hd_bet_logic.setupPythonRequirements()
-            hd_bet_logic.process(self._parameterNode.inputT1, None, segmentation, "cpu")
-            segmentation.SetAndObserveTransformNodeID(transformNode.GetID())
-            segmentation.HardenTransform()
+            hd_bet_logic.process(self._parameterNode.inputT1, None, segmentationNodeBET, "cpu")
+            segmentationNodeBET.SetAndObserveTransformNodeID(transformNode.GetID())
+            segmentationNodeBET.HardenTransform()
 
             # update parameter node
-            self._parameterNode.brainMask = segmentation
+            self._parameterNode.brainMask = segmentationNodeBET
 
             # save segmentation
             if self._parameterNode.saveBrainMask:
-                slicer.util.saveNode(segmentation, self.ui.pathLineEditBrainMask.currentPath)
+                slicer.util.saveNode(segmentationNodeBET, self.ui.pathLineEditBrainMask.currentPath)
 
     def updateGUIFromParameterNode(self, caller, event):
         # check skull stripping buttons availability

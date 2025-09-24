@@ -479,9 +479,18 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             fixedVolumeNode = self._parameterNode.inputCT
             movingVolumeNode = self._parameterNode.inputT1
 
-            # Create new nodes for output
-            segmentation = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
-            segmentation.SetName(f"CT brain mask")
+            # create ROI segmentation for registration
+            segmentationNodeROI = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
+            segmentationNodeROI.SetReferenceImageGeometryParameterFromVolumeNode(self._parameterNode.inputCT)
+            segmentationNodeROI.CreateDefaultDisplayNodes()
+            segmentId = segmentationNodeROI.GetSegmentation().AddEmptySegment()
+            segmentationNodeROI.GetSegmentation().GetSegment(segmentId)
+            segmentation_array = (slicer.util.arrayFromVolume(fixedVolumeNode) < self._parameterNode.metalThreshold_HU).astype(np.uint8)
+            slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_array, segmentationNodeROI, segmentId)
+
+            # create new nodes for output
+            segmentationNodeBET = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
+            segmentationNodeBET.SetName(f"CT brain mask")
             transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
 
             # Run registration
@@ -492,22 +501,27 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             parameters["useRigid"] = True
             parameters["samplingPercentage"] = 0.01
             parameters["initializeTransformMode"] = "useGeometryAlign"
+            parameters["maskProcessingMode"] = "ROI"
+            parameters["fixedBinaryVolume"] = segmentationNodeROI.GetID()
             cliBrainsFitRigidNode = slicer.cli.run(slicer.modules.brainsfit, None, parameters, wait_for_completion=True)
+
+            # remove ROI segmentation
+            slicer.mrmlScene.RemoveNode(segmentationNodeROI)
 
             # run HD-BET
             import HDBrainExtractionTool as hd_bet
             hd_bet_logic = hd_bet.HDBrainExtractionToolLogic()
             hd_bet_logic.setupPythonRequirements()
-            hd_bet_logic.process(self._parameterNode.inputT1, None, segmentation, "cpu")
-            segmentation.SetAndObserveTransformNodeID(transformNode.GetID())
-            segmentation.HardenTransform()
+            hd_bet_logic.process(self._parameterNode.inputT1, None, segmentationNodeBET, "cpu")
+            segmentationNodeBET.SetAndObserveTransformNodeID(transformNode.GetID())
+            segmentationNodeBET.HardenTransform()
 
             # update parameter node
-            self._parameterNode.brainMask = segmentation
+            self._parameterNode.brainMask = segmentationNodeBET
 
             # save segmentation
             if self._parameterNode.saveBrainMask:
-                slicer.util.saveNode(segmentation, self.ui.pathLineEditBrainMask.currentPath)
+                slicer.util.saveNode(segmentationNodeBET, self.ui.pathLineEditBrainMask.currentPath)
 
     def updateGUIFromParameterNode(self, caller, event):
         # check skull stripping buttons availability

@@ -178,11 +178,11 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.logic = None
         self._parameterNode = None
         self._parameterNodeGuiTag = None
-        self.lastSelectedBoltFiducials = None
+
+        self.lastSelectedBoltFiducials = None # store the last selected fiducial node to remove observer after GUI is changed
 
         self.electrodes: list[Electrode] = []
         self.selected_electrode = None
-        self.selected_markup_index = None
         self.result_markup_node = None
 
         self.wait_for_storage_node = False
@@ -309,47 +309,23 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     def onSpinBoxShiftElectrodeMicrostepChanged(self, spin_box_value):
         self.selected_electrode.curve_points_offset = spin_box_value
-        selected_points = self.logic.select_contact_points(self.selected_electrode,
-                                                           self._parameterNode.contactLength_mm,
-                                                           self._parameterNode.contactGap_mm,
-                                                           self.selected_electrode.curve_points_offset)
-
-        self.updateFiducialLabels(selected_points)
-
+        self.logic.update_fiducials(self._parameterNode.inputCT,
+                                    self.result_markup_node,
+                                    self.selected_electrode,
+                                    self._parameterNode.contactLength_mm,
+                                    self._parameterNode.contactGap_mm)
+        
     def onSpinBoxShiftElectrodeByContactChanged(self, spin_box_value):
         self.selected_electrode.shift_fiducials_value = spin_box_value
-        selected_points = self.logic.select_contact_points(self.selected_electrode,
-                                                           self._parameterNode.contactLength_mm,
-                                                           self._parameterNode.contactGap_mm,
-                                                           self.selected_electrode.curve_points_offset)
-        
-        self.updateFiducialLabels(selected_points)
-
-    def updateFiducialLabels(self, selected_points):
-        fiducial_node = self.ui.SimpleMarkupsWidgetEstimatedContacts.currentNode()
-        if self.selected_electrode.warn_out_of_range:
-            slicer.util.warningDisplay(f"Could not fit all contact points on electrode {self.selected_electrode.label_prefix}, contact points may be out of range of CT.", windowTitle="Warning")
-            self.selected_electrode.warn_out_of_range = False
-
-        # pause rendering while changing fiducial positions
-        with slicer.util.RenderBlocker():
-            # convert to RAS
-            for i, point in enumerate(selected_points):
-                fiducial_idx = fiducial_node.GetControlPointIndexByLabel(f"{self.selected_electrode.label_prefix}{i+1}")
-                if fiducial_idx == -1:
-                    slicer.util.warningDisplay(f"Could not find fiducial {self.selected_electrode.label_prefix}{i+1}.", windowTitle="Warning")
-                    continue
-                point = self.logic.IJK_to_RAS(point[::-1], self._parameterNode.inputCT)
-                fiducial_node.SetNthControlPointPosition(fiducial_idx, point)
-
-            # jump slices to updated fiducials
-            # slicer.modules.markups.logic().JumpSlicesToNthPointInMarkup(fiducial_node.GetID(), self.selected_markup_index, True)
+        self.logic.update_fiducials(self._parameterNode.inputCT,
+                                    self.result_markup_node,
+                                    self.selected_electrode,
+                                    self._parameterNode.contactLength_mm,
+                                    self._parameterNode.contactGap_mm)
 
     def onMarkupsWidgetEstimatedContactsSelectionChanged(self, markupIndex):
-        fiducial_node = self.ui.SimpleMarkupsWidgetEstimatedContacts.currentNode()
-        selected_label = fiducial_node.GetNthControlPointLabel(markupIndex)
+        selected_label = self.result_markup_node.GetNthControlPointLabel(markupIndex)
         selected_label = re.sub(r"\d+$", "", selected_label) # remove trailing number
-        self.selected_markup_index = markupIndex
 
         # find electrode by name
         for electrode in self.electrodes:
@@ -378,14 +354,14 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def onCurveFittingClicked(self):
         with slicer.util.WaitCursor():
             self.result_markup_node = self.logic.curve_fitting(self._parameterNode.inputCT,
-                                                             self.electrodes,
-                                                             self._parameterNode.boltSphereRadius_mm,
-                                                             self._parameterNode.blobSize_sigma,
-                                                             self._parameterNode.contactDiameter_mm,
-                                                             self._parameterNode.contactLength_mm,
-                                                             self._parameterNode.contactGap_mm,
-                                                             self._parameterNode.metalThreshold_HU,
-                                                             self._parameterNode.gaussianBalls)
+                                                               self.electrodes,
+                                                               self._parameterNode.boltSphereRadius_mm,
+                                                               self._parameterNode.blobSize_sigma,
+                                                               self._parameterNode.contactDiameter_mm,
+                                                               self._parameterNode.contactLength_mm,
+                                                               self._parameterNode.contactGap_mm,
+                                                               self._parameterNode.metalThreshold_HU,
+                                                               self._parameterNode.gaussianBalls)
         
         # collapse collapsibleButtonInputBoltFiducials and make visible output collapsible button
         self.ui.collapsibleButtonInputBoltFiducials.collapsed = True
@@ -417,41 +393,9 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                                             self._parameterNode.linearApproximation)
 
     def onBoltSegmentationClicked(self):
-        # load electrodes
-        self.electrodes = []
-        electrode_prefixes = []
-
-        # find all electrodes with correct label
-        for i in range(self._parameterNode.boltFiducials.GetNumberOfControlPoints()):
-            bolt_tip_ras = [0, 0, 0]
-            self._parameterNode.boltFiducials.GetNthControlPointPosition(i, bolt_tip_ras)
-            label = self._parameterNode.boltFiducials.GetNthControlPointLabel(i)
-
-            if Electrode.split_label(label):
-                prefix, n_contacts = Electrode.split_label(label)
-                self.electrodes.append(Electrode(bolt_tip_ras, label, self._parameterNode.contactLength_mm, self._parameterNode.contactGap_mm))
-                electrode_prefixes.append(prefix)
-            else:
-                continue
-
-        # find all electrodes with incorrect label and check if there is a pair with entry point
-        for i in range(self._parameterNode.boltFiducials.GetNumberOfControlPoints()):
-            electrode_tip_ras = [0, 0, 0]
-            self._parameterNode.boltFiducials.GetNthControlPointPosition(i, electrode_tip_ras)
-            label = self._parameterNode.boltFiducials.GetNthControlPointLabel(i)
-
-            if Electrode.split_label(label):
-                continue
-            elif label[-1] == "1" and label[:-1] in electrode_prefixes:
-                electrode_index = electrode_prefixes.index(label[:-1])
-                self.electrodes[electrode_index].tip_ras = electrode_tip_ras
-                self.electrodes[electrode_index].manual_tip = True
-            else:
-                slicer.util.errorDisplay(f"Electrode label {label} is not in the correct format. It should be in the format '<label>-<number>', where <label> is the electrode prefix and <number> is the number of contacts.")
-                raise ValueError
-
         # segment bolts
         with slicer.util.WaitCursor():
+            self.electrodes = self.logic.load_electrodes(self._parameterNode.boltFiducials, self._parameterNode.contactLength_mm, self._parameterNode.contactGap_mm)
             self.logic.bolt_segmentation(self._parameterNode.inputCT,
                                          self.electrodes,
                                          self._parameterNode.boltSphereRadius_mm,
@@ -503,7 +447,7 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             if new_ct and new_ct.GetStorageNode():
                 if self._parameterNode.saveBrainMask:
                     ct_path = new_ct.GetStorageNode().GetFullNameFromFileName()
-                    self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "BETmask.seg.nrrd")
+                    self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
             else:
                 self.wait_for_storage_node = True
 
@@ -536,9 +480,8 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_array, segmentationNodeROI, segmentId)
 
             # create new nodes for output
-            segmentationNodeBET = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
-            segmentationNodeBET.SetName(f"CT brain mask")
-            transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
+            segmentationNodeBET = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", slicer.mrmlScene.GenerateUniqueName("CT Brain mask"))
+            transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode", slicer.mrmlScene.GenerateUniqueName("Transform T1 to CT"))
 
             # Run registration
             parameters = {}
@@ -611,7 +554,6 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             missing.append("brain mask")
         if self._parameterNode.boltFiducials is None:
             missing.append("bolt fiducials")
-
         if missing:
             self.ui.buttonRun.setEnabled(False)
             self.ui.buttonRun.setToolTip(f"Missing input(s): {', '.join(missing)}")
@@ -637,7 +579,7 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             if self._parameterNode.saveBrainMask and self._parameterNode.inputCT.GetStorageNode():
                 self.wait_for_storage_node = False
                 ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
-                self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "BETmask.seg.nrrd")
+                self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
 
     @vtk.calldata_type(vtk.VTK_OBJECT)
     def onNodeAdded(self, caller, event,  node):
@@ -759,6 +701,32 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
     def getParameterNode(self):
         return ContactDetectorParameterNode(super().getParameterNode())
     
+    def update_fiducials(self,
+                        inputCT: vtkMRMLScalarVolumeNode,
+                        fiducial_node: vtkMRMLScalarVolumeNode,
+                        selected_electrode: Electrode,
+                        contactLength_mm: float,
+                        contactGap_mm: float):
+        selected_points = self.select_contact_points(selected_electrode,
+                                                     contactLength_mm,
+                                                     contactGap_mm,
+                                                     selected_electrode.curve_points_offset)
+
+        if selected_electrode.warn_out_of_range:
+            slicer.util.warningDisplay(f"Could not fit all contact points on electrode {selected_electrode.label_prefix}, contact points may be out of range of CT.", windowTitle="Warning")
+            selected_electrode.warn_out_of_range = False
+
+        # pause rendering while changing fiducial positions
+        with slicer.util.RenderBlocker():
+            # convert to RAS
+            for i, point in enumerate(selected_points):
+                fiducial_idx = fiducial_node.GetControlPointIndexByLabel(f"{selected_electrode.label_prefix}{i+1}")
+                if fiducial_idx == -1:
+                    slicer.util.warningDisplay(f"Could not find fiducial {selected_electrode.label_prefix}{i+1}.", windowTitle="Warning")
+                    continue
+                point = self.IJK_to_RAS(point[::-1], inputCT)
+                fiducial_node.SetNthControlPointPosition(fiducial_idx, point)
+    
     def curve_fitting(self,
             inputCT: vtkMRMLScalarVolumeNode,
             electrodes: list[Electrode],
@@ -802,10 +770,10 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
 
         # prepare markups
         markupsNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
-        markupsNode.SetName("Electrodes")
+        markupsNode.SetName(slicer.mrmlScene.GenerateUniqueName("Electrodes"))
 
-        # get number of points to fit
-        n = np.ceil((contact_length_mm + contact_gap_mm) / 0.1).astype(int)
+        # get number of offset points to find the best fit
+        n_offsets = np.ceil((contact_length_mm + contact_gap_mm) / 0.1).astype(int)
 
         for electrode in electrodes:
             slicer.app.processEvents()
@@ -859,11 +827,11 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
             curve_distances_between_points_mm = np.linalg.norm(diffs_mm, axis=1)
             electrode.curve_cumulative_distances_mm = np.cumsum(curve_distances_between_points_mm)
 
-            # use curve points that are closest to the tip as the default offset
+            # if manual tip of the electrode is set, use curve point that is closest to the tip as the default offset
             if electrode.manual_tip:
                 default_offset = np.argmin(np.linalg.norm(electrode.curve_points - electrode.tip_ijk, axis=1))
             
-            # find the best offset: i.e. the first offset where are all contacts on the metal
+            # else find the best offset: i.e. the first offset where are all contacts are on the metal
             else:
                 all_contacts_on_metal = False
                 default_offset = -1
@@ -873,13 +841,13 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
                     points_ijk = np.round(selected_points).astype(int)
                     all_contacts_on_metal = np.all(ct_array[points_ijk[:, 0], points_ijk[:, 1], points_ijk[:, 2]] >= metal_threshold)
 
-                    if default_offset + n >= len(electrode.curve_cumulative_distances_mm):
+                    if default_offset + n_offsets >= len(electrode.curve_cumulative_distances_mm):
                         break
             
             # find the best fit
             best_fit = -np.inf
             best_gaussian = None
-            for offset in range(default_offset, default_offset + n):
+            for offset in range(default_offset, default_offset + n_offsets):
                 slicer.app.processEvents()
 
                 # select points from the fitted curve
@@ -1252,6 +1220,44 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
         volumeNode.GetIJKToRASMatrix(volumeIjkToRas)
         point_Ras = volumeIjkToRas.MultiplyPoint(np.append(point_IJK,1.0))
         return np.array(point_Ras[:3])
+
+    def load_electrodes(self,
+                        boltFiducials: vtkMRMLMarkupsFiducialNode,
+                        contactLength_mm: float,
+                        contactGap_mm: float) -> list[Electrode]:
+        electrodes: list[Electrode] = []
+        electrode_prefixes = []
+
+        # find all electrodes with correct label
+        for i in range(boltFiducials.GetNumberOfControlPoints()):
+            bolt_tip_ras = [0, 0, 0]
+            boltFiducials.GetNthControlPointPosition(i, bolt_tip_ras)
+            label = boltFiducials.GetNthControlPointLabel(i)
+
+            if Electrode.split_label(label):
+                prefix, n_contacts = Electrode.split_label(label)
+                electrodes.append(Electrode(bolt_tip_ras, label, contactLength_mm, contactGap_mm))
+                electrode_prefixes.append(prefix)
+            else:
+                continue
+
+        # find all electrodes with incorrect label and check if there is a pair with entry point
+        for i in range(boltFiducials.GetNumberOfControlPoints()):
+            electrode_tip_ras = [0, 0, 0]
+            boltFiducials.GetNthControlPointPosition(i, electrode_tip_ras)
+            label = boltFiducials.GetNthControlPointLabel(i)
+
+            if Electrode.split_label(label):
+                continue
+            elif label[-1] == "1" and label[:-1] in electrode_prefixes:
+                electrode_index = electrode_prefixes.index(label[:-1])
+                electrodes[electrode_index].tip_ras = electrode_tip_ras
+                electrodes[electrode_index].manual_tip = True
+            else:
+                slicer.util.errorDisplay(f"Electrode label {label} is not in the correct format. It should be in the format '<label>-<number>', where <label> is the electrode prefix and <number> is the number of contacts.")
+                raise ValueError
+        
+        return electrodes
 
 
 #

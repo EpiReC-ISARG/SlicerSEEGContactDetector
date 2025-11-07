@@ -11,9 +11,14 @@
 - [x] add micro step while electrode shifting
 - [x] new fiducial naming A-no, B-no
 - [x] disabled buttons tooltip hint
+- [ ] save curve in parameterNode
+- [ ] electrode dimensions in Electrode class
+- [ ] electrodes output in T1 space
+- [ ] manual input -> disable metal check
 
 # Visualization
 - [x] debug checkbox to enable visualization
+- [ ] smaller cross marker after View in scene (test on Windows)
 
 # Debugging
 - [x] check centers of the spheres and of the gaussinan balls
@@ -28,6 +33,7 @@
 - [x] start without extending the curve
 - [x] ras tip fiducial naming C1-no to C1
 - [x] save CT brain mask path is missing when T1 and CT are loaded outside of the module
+- [ ] CT path bug
 
 # Finalization
 - [x] add parameters into the parameter node and check scene saving

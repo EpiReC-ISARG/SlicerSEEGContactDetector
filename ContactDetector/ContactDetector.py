@@ -185,8 +185,6 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.selected_electrode = None
         self.result_markup_node = None
 
-        self.wait_for_storage_node = False
-
     def setup(self) -> None:
         """Called when the user opens the module the first time and the widget is initialized."""
         ScriptedLoadableModuleWidget.setup(self)
@@ -445,11 +443,8 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             new_ct = slicer.mrmlScene.GetNodeByID(self.ui.comboBoxCT.currentNodeID)
             if new_ct and new_ct.GetStorageNode():
-                if self._parameterNode.saveBrainMask:
-                    ct_path = new_ct.GetStorageNode().GetFullNameFromFileName()
-                    self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
-            else:
-                self.wait_for_storage_node = True
+                ct_path = new_ct.GetStorageNode().GetFullNameFromFileName()
+                self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
 
     def onShowCTClicked(self):
         slicer.util.setSliceViewerLayers(background = self._parameterNode.inputCT)
@@ -573,13 +568,11 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if self._parameterNode.boltFiducials is not None:
             self.lastSelectedBoltFiducials = self._parameterNode.boltFiducials
             self.addObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
-    
+
     def volumeModified(self, caller, event):
-        if self.wait_for_storage_node:
-            if self._parameterNode.saveBrainMask and self._parameterNode.inputCT.GetStorageNode():
-                self.wait_for_storage_node = False
-                ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
-                self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
+        if self._parameterNode.inputCT.GetStorageNode() and self._parameterNode.saveBrainMask:
+            ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
+            self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
 
     @vtk.calldata_type(vtk.VTK_OBJECT)
     def onNodeAdded(self, caller, event,  node):
@@ -587,7 +580,7 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if "ct" in node.GetName().lower() and isinstance(node, ContactDetectorParameterNode.__annotations__['inputCT']):
             self._parameterNode.inputCT = node
             self._parameterNode.inputCT.AddObserver(vtk.vtkCommand.ModifiedEvent, self.volumeModified)
-
+            
         if "t1" in node.GetName().lower() and isinstance(node, ContactDetectorParameterNode.__annotations__['inputT1']):
             self._parameterNode.inputT1 = node
     
@@ -639,6 +632,9 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             for node in volume_nodes:
                 if "ct" in node.GetName().lower():
                     self._parameterNode.inputCT = node
+                    if node.GetStorageNode():
+                        ct_path = node.GetStorageNode().GetFullNameFromFileName()
+                        self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
                 if "t1" in node.GetName().lower():
                     self._parameterNode.inputT1 = node
             

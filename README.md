@@ -33,7 +33,7 @@
 - [x] start without extending the curve
 - [x] ras tip fiducial naming C1-no to C1
 - [x] save CT brain mask path is missing when T1 and CT are loaded outside of the module
-- [ ] CT path bug
+- [x] CT path bug
 
 # Finalization
 - [x] add parameters into the parameter node and check scene saving

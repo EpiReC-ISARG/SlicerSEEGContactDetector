@@ -118,6 +118,7 @@ class ContactDetectorParameterNode:
     brainMask: vtkMRMLSegmentationNode
     boltFiducials: vtkMRMLMarkupsFiducialNode
 
+    skipRegistration: bool = False
     saveBrainMask: bool = True
     metalThreshold_HU: Annotated[float, WithinRange(0, 9999999)] = 3000
     contactLength_mm: Annotated[float, WithinRange(0.1, 100)] = 2
@@ -465,41 +466,43 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             fixedVolumeNode = self._parameterNode.inputCT
             movingVolumeNode = self._parameterNode.inputT1
 
-            # create ROI segmentation for registration
-            segmentationNodeROI = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
-            segmentationNodeROI.SetReferenceImageGeometryParameterFromVolumeNode(self._parameterNode.inputCT)
-            segmentationNodeROI.CreateDefaultDisplayNodes()
-            segmentId = segmentationNodeROI.GetSegmentation().AddEmptySegment()
-            segmentationNodeROI.GetSegmentation().GetSegment(segmentId)
-            segmentation_array = (slicer.util.arrayFromVolume(fixedVolumeNode) < self._parameterNode.metalThreshold_HU).astype(np.uint8)
-            slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_array, segmentationNodeROI, segmentId)
+            if not self._parameterNode.skipRegistration:
+                # create ROI segmentation for registration
+                segmentationNodeROI = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
+                segmentationNodeROI.SetReferenceImageGeometryParameterFromVolumeNode(self._parameterNode.inputCT)
+                segmentationNodeROI.CreateDefaultDisplayNodes()
+                segmentId = segmentationNodeROI.GetSegmentation().AddEmptySegment()
+                segmentationNodeROI.GetSegmentation().GetSegment(segmentId)
+                segmentation_array = (slicer.util.arrayFromVolume(fixedVolumeNode) < self._parameterNode.metalThreshold_HU).astype(np.uint8)
+                slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_array, segmentationNodeROI, segmentId)
 
-            # create new nodes for output
+                transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode", slicer.mrmlScene.GenerateUniqueName("Transform T1 to CT"))
+
+                # Run registration
+                parameters = {}
+                parameters["fixedVolume"] = fixedVolumeNode.GetID()
+                parameters["movingVolume"] = movingVolumeNode.GetID()
+                parameters["linearTransform"] = transformNode.GetID()
+                parameters["useRigid"] = True
+                parameters["samplingPercentage"] = 0.01
+                parameters["initializeTransformMode"] = "useGeometryAlign"
+                parameters["maskProcessingMode"] = "ROI"
+                parameters["fixedBinaryVolume"] = segmentationNodeROI.GetID()
+                cliBrainsFitRigidNode = slicer.cli.run(slicer.modules.brainsfit, None, parameters, wait_for_completion=True)
+
+                # remove ROI segmentation
+                slicer.mrmlScene.RemoveNode(segmentationNodeROI)
+
             segmentationNodeBET = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", slicer.mrmlScene.GenerateUniqueName("CT Brain mask"))
-            transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode", slicer.mrmlScene.GenerateUniqueName("Transform T1 to CT"))
-
-            # Run registration
-            parameters = {}
-            parameters["fixedVolume"] = fixedVolumeNode.GetID()
-            parameters["movingVolume"] = movingVolumeNode.GetID()
-            parameters["linearTransform"] = transformNode.GetID()
-            parameters["useRigid"] = True
-            parameters["samplingPercentage"] = 0.01
-            parameters["initializeTransformMode"] = "useGeometryAlign"
-            parameters["maskProcessingMode"] = "ROI"
-            parameters["fixedBinaryVolume"] = segmentationNodeROI.GetID()
-            cliBrainsFitRigidNode = slicer.cli.run(slicer.modules.brainsfit, None, parameters, wait_for_completion=True)
-
-            # remove ROI segmentation
-            slicer.mrmlScene.RemoveNode(segmentationNodeROI)
 
             # run HD-BET
             import HDBrainExtractionTool as hd_bet
             hd_bet_logic = hd_bet.HDBrainExtractionToolLogic()
             hd_bet_logic.setupPythonRequirements()
             hd_bet_logic.process(self._parameterNode.inputT1, None, segmentationNodeBET, "cpu")
-            segmentationNodeBET.SetAndObserveTransformNodeID(transformNode.GetID())
-            segmentationNodeBET.HardenTransform()
+            if not self._parameterNode.skipRegistration:
+                segmentationNodeBET.SetAndObserveTransformNodeID(transformNode.GetID())
+                segmentationNodeBET.HardenTransform()
 
             # update parameter node
             self._parameterNode.brainMask = segmentationNodeBET
@@ -1251,7 +1254,6 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
                 electrodes[electrode_index].manual_tip = True
             else:
                 slicer.util.errorDisplay(f"Electrode label {label} is not in the correct format. It should be in the format '<label>-<number>', where <label> is the electrode prefix and <number> is the number of contacts.")
-                raise ValueError
         
         return electrodes
 

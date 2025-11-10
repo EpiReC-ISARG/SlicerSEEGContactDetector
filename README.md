@@ -14,7 +14,8 @@
 - [ ] save curve in parameterNode
 - [ ] electrode dimensions in Electrode class
 - [ ] electrodes output in T1 space
-- [ ] manual input -> disable metal check
+- [x] manual input -> disable metal check
+- [x] skip registration button
 
 # Visualization
 - [x] debug checkbox to enable visualization
@@ -40,7 +41,7 @@
 - [x] remove step-by-step, add event on run all click
 - [ ] create tooltip help
 - [ ] add module description, help and acknowledgement
-- [ ] icon
+- [x] icon
 - [x] mrml scene (ocean, etc)
 
 # Testing

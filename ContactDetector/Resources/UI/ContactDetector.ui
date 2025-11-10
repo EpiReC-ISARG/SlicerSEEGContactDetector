@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>441</width>
-    <height>1277</height>
+    <height>1345</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -19,6 +19,9 @@
      <layout class="QGridLayout" name="gridLayout">
       <item row="2" column="1">
        <widget class="qMRMLNodeComboBox" name="comboBoxBrainMask">
+        <property name="toolTip">
+         <string>Imported Segmentations with 'mask' in their name are selected automatically.</string>
+        </property>
         <property name="nodeTypes">
          <stringlist notr="true">
           <string>vtkMRMLSegmentationNode</string>
@@ -43,6 +46,9 @@
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_2">
+        <property name="toolTip">
+         <string/>
+        </property>
         <property name="text">
          <string>T1 for masking:</string>
         </property>
@@ -57,6 +63,9 @@
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label">
+        <property name="toolTip">
+         <string/>
+        </property>
         <property name="text">
          <string>Input CT:</string>
         </property>
@@ -69,6 +78,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Imported Volumes with 'T1' in their name are selected automatically.</string>
         </property>
         <property name="nodeTypes">
          <stringlist notr="true">
@@ -101,6 +113,9 @@
       </item>
       <item row="0" column="1">
        <widget class="qMRMLNodeComboBox" name="comboBoxCT">
+        <property name="toolTip">
+         <string>Imported Volumes with 'CT' in their name are selected automatically.</string>
+        </property>
         <property name="nodeTypes">
          <stringlist notr="true">
           <string>vtkMRMLScalarVolumeNode</string>
@@ -122,6 +137,9 @@
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_3">
+        <property name="toolTip">
+         <string/>
+        </property>
         <property name="text">
          <string>Brain mask:</string>
         </property>
@@ -129,6 +147,9 @@
       </item>
       <item row="3" column="0">
        <widget class="QLabel" name="label_4">
+        <property name="toolTip">
+         <string/>
+        </property>
         <property name="text">
          <string>Bolt fiducials:</string>
         </property>
@@ -136,6 +157,9 @@
       </item>
       <item row="3" column="1">
        <widget class="qMRMLNodeComboBox" name="comboBoxBoltFiducials">
+        <property name="toolTip">
+         <string>Imported Markups with 'fiducials' in their name are selected automatically.</string>
+        </property>
         <property name="nodeTypes">
          <stringlist notr="true">
           <string>vtkMRMLMarkupsFiducialNode</string>
@@ -237,7 +261,7 @@
       <bool>true</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_5">
-      <item row="0" column="0">
+      <item row="2" column="0">
        <widget class="QCheckBox" name="checkBox">
         <property name="enabled">
          <bool>true</bool>
@@ -250,72 +274,42 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="ctkPathLineEdit" name="pathLineEditBrainMask">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="filters">
-         <set>ctkPathLineEdit::Executable|ctkPathLineEdit::Files|ctkPathLineEdit::NoDot|ctkPathLineEdit::NoDotDot|ctkPathLineEdit::PermissionMask|ctkPathLineEdit::Readable|ctkPathLineEdit::Writable</set>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
+      <item row="3" column="0">
        <widget class="QLabel" name="label_5">
         <property name="text">
          <string>Metal threshold (HU):</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox">
-        <property name="SlicerParameterName" stdset="0">
-         <string>metalThreshold_HU</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>Contact length (mm):</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
-        <property name="singleStep">
-         <double>0.100000000000000</double>
-        </property>
-        <property name="SlicerParameterName" stdset="0">
-         <string>contactLength_mm</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_8">
-        <property name="text">
-         <string>Gap between contacts (mm):</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
-        <property name="singleStep">
-         <double>0.100000000000000</double>
-        </property>
-        <property name="SlicerParameterName" stdset="0">
-         <string>contactGap_mm</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
+      <item row="6" column="0">
        <widget class="QLabel" name="label_9">
         <property name="text">
          <string>Electrode diameter (mm):</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="1">
+      <item row="5" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>Gap between contacts (mm):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Sphere radius around the bolt (mm):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>Gaussian blob size (sigma):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1">
        <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
         <property name="singleStep">
          <double>0.100000000000000</double>
@@ -325,14 +319,41 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Sphere radius around the bolt (mm):</string>
+      <item row="2" column="1">
+       <widget class="ctkPathLineEdit" name="pathLineEditBrainMask">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="filters">
+         <set>ctkPathLineEdit::Executable|ctkPathLineEdit::Files|ctkPathLineEdit::NoDot|ctkPathLineEdit::NoDotDot|ctkPathLineEdit::PermissionMask|ctkPathLineEdit::Readable|ctkPathLineEdit::Writable</set>
         </property>
        </widget>
       </item>
-      <item row="5" column="1">
+      <item row="4" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+        <property name="SlicerParameterName" stdset="0">
+         <string>contactLength_mm</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Contact length (mm):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_6">
+        <property name="SlicerParameterName" stdset="0">
+         <string>blobSize_sigma</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1">
        <widget class="QDoubleSpinBox" name="doubleSpinBox_5">
         <property name="singleStep">
          <double>0.100000000000000</double>
@@ -342,17 +363,30 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="label_10">
-        <property name="text">
-         <string>Gaussian blob size (sigma):</string>
+      <item row="3" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox">
+        <property name="SlicerParameterName" stdset="0">
+         <string>metalThreshold_HU</string>
         </property>
        </widget>
       </item>
-      <item row="6" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_6">
+      <item row="5" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
         <property name="SlicerParameterName" stdset="0">
-         <string>blobSize_sigma</string>
+         <string>contactGap_mm</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="2">
+       <widget class="QCheckBox" name="checkBox_2">
+        <property name="text">
+         <string>Skip registration while brain segmentation</string>
+        </property>
+        <property name="SlicerParameterName" stdset="0">
+         <string>skipRegistration</string>
         </property>
        </widget>
       </item>

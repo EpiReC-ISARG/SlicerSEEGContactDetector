@@ -451,15 +451,6 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         slicer.util.resetSliceViews()
 
     def onCreateBrainMaskClicked(self):
-        # check HD-BET availability
-        em = slicer.app.extensionsManagerModel()
-        if not em.isExtensionInstalled("HDBrainExtraction"):
-            if not em.installExtensionFromServer("HDBrainExtraction"):
-                raise ValueError(f"Extension HDBrainExtraction is not installed")
-            
-        if not em.isExtensionEnabled("HDBrainExtraction"):
-            raise ValueError(f"Extension HDBrainExtraction is not loaded even though it is installed")
-
         with slicer.util.WaitCursor():
             # coregister T1 to CT
             fixedVolumeNode = self._parameterNode.inputCT

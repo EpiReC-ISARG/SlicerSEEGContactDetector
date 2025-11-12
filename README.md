@@ -4,7 +4,7 @@
 - [x] automatic installation of python packages
 - [X] contact manual shifting
 - [x] use cropped array around the balls for the correlation for faster computation
-- [ ] CT bone reconstruction
+- [ ] ~~CT bone reconstruction~~
 - [x] auto load input based on input file name
 - [x] fiducial placement
 - [x] use tip of the electrode instead of the linear approximation
@@ -20,6 +20,8 @@
 # Visualization
 - [x] debug checkbox to enable visualization
 - [ ] smaller cross marker after View in scene (test on Windows)
+- [ ] hide detections from previous run
+- [ ] set cross marker after Run
 
 # Debugging
 - [x] check centers of the spheres and of the gaussinan balls
@@ -29,12 +31,13 @@
 - [x] warning if there is no bolt around the input fiducial
 - [x] fix error when extending the curve outside of the image / moving the electrode outside of the image
 - [x] critical error when shifting contacts after renaming estimated contacts
-- [ ] cannot make window smaller due to the minimum size of the widgets => make Inputs buttons in vertical layout?
+- [ ] ~~cannot make window smaller due to the minimum size of the widgets => make Inputs buttons in vertical layout?~~
 - [x] change estimation of the electrode axis orientation
 - [x] start without extending the curve
 - [x] ras tip fiducial naming C1-no to C1
 - [x] save CT brain mask path is missing when T1 and CT are loaded outside of the module
 - [x] CT path bug
+- [ ] electrode with zero length (A-0)
 
 # Finalization
 - [x] add parameters into the parameter node and check scene saving
@@ -43,6 +46,14 @@
 - [ ] add module description, help and acknowledgement
 - [x] icon
 - [x] mrml scene (ocean, etc)
+- [ ] Sample data (defaced)
+- [ ] Tests
+- [ ] Documentation
+- [ ] GitHub description
+- [ ] Check CMakeLists
+- [x] Unify extension and module names
+- [ ] EN short video
+- [ ] EN tutorial
 
 # Testing
 - [x] prepare dataset

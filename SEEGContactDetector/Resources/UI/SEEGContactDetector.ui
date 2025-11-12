@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ContactDetector</class>
- <widget class="qMRMLWidget" name="ContactDetector">
+ <class>SEEGContactDetector</class>
+ <widget class="qMRMLWidget" name="SEEGContactDetector">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -651,7 +651,7 @@
  <resources/>
  <connections>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>comboBoxBoltFiducials</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -667,7 +667,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>comboBoxBrainMask</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -683,7 +683,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>comboBoxCT</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -699,7 +699,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>comboBoxT1</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -715,7 +715,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>SimpleMarkupsWidgetInput</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -731,7 +731,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>MarkupsPlaceWidget</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -747,7 +747,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>SimpleMarkupsWidgetEstimatedContacts</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>

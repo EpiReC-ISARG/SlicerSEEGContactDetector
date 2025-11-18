@@ -130,13 +130,15 @@ class SEEGContactDetectorParameterNode:
     brainMask: vtkMRMLSegmentationNode
     boltFiducials: vtkMRMLMarkupsFiducialNode
 
+    placeElectrodeTip: bool = False
+
     skipRegistration: bool = False
     saveBrainMask: bool = True
     metalThreshold_HU: Annotated[float, WithinRange(0, 9999999)] = 3000
     contactLength_mm: Annotated[float, WithinRange(0.1, 100)] = 2
     contactGap_mm: Annotated[float, WithinRange(0.1, 100)] = 1.5
     contactDiameter_mm: Annotated[float, WithinRange(0.1, 100)] = 0.8
-    boltSphereRadius_mm: Annotated[float, WithinRange(0.1, 100)] = 5
+    boltRadius_mm: Annotated[float, WithinRange(0.1, 100)] = 5
     blobSize_sigma: Annotated[float, WithinRange(0.1, 100)] = 3
 
     # developerMode
@@ -232,7 +234,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
         # Buttons
         self.ui.buttonShowCT.connect("clicked(bool)", self.onShowCTClicked)
-        self.ui.buttonCreateBrainMask.connect("clicked(bool)", self.onCreateBrainMaskClicked)
+        self.ui.buttonCreateFromT1.connect("clicked(bool)", self.onCreateFromT1Clicked)
 
         self.ui.radioButtonRenderingMetal.connect("clicked(bool)", self.onRenderingMetalClicked)
         self.ui.radioButtonRenderingHead.connect("clicked(bool)", self.onRenderingHeadClicked)
@@ -366,7 +368,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         with slicer.util.WaitCursor():
             self.result_markup_node = self.logic.curve_fitting(self._parameterNode.inputCT,
                                                                self.electrodes,
-                                                               self._parameterNode.boltSphereRadius_mm,
+                                                               self._parameterNode.boltRadius_mm,
                                                                self._parameterNode.blobSize_sigma,
                                                                self._parameterNode.contactDiameter_mm,
                                                                self._parameterNode.contactLength_mm,
@@ -374,9 +376,9 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                                                                self._parameterNode.metalThreshold_HU,
                                                                self._parameterNode.gaussianBalls)
         
-        # collapse collapsibleButtonInputBoltFiducials and make visible output collapsible button
-        self.ui.collapsibleButtonInputBoltFiducials.collapsed = True
-        self.ui.collapsibleButtonEstimatedContacts.collapsed = False
+        # collapse collapsibleButtonBoltFiducialList and make visible output collapsible button
+        self.ui.collapsibleButtonBoltFiducialList.collapsed = True
+        self.ui.collapsibleButtonDetectedContactList.collapsed = False
         self.ui.shiftFiducialsWidget.setVisible(True)
 
         # show markupsNode in the list widget
@@ -409,7 +411,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
             self.electrodes = self.logic.load_electrodes(self._parameterNode.boltFiducials, self._parameterNode.contactLength_mm, self._parameterNode.contactGap_mm)
             self.logic.bolt_segmentation(self._parameterNode.inputCT,
                                          self.electrodes,
-                                         self._parameterNode.boltSphereRadius_mm,
+                                         self._parameterNode.boltRadius_mm,
                                          self._parameterNode.metalThreshold_HU,
                                          self._parameterNode.boltSegmentation)
 
@@ -463,12 +465,12 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         slicer.util.setSliceViewerLayers(background = self._parameterNode.inputCT)
         slicer.util.resetSliceViews()
 
-    def onCreateBrainMaskClicked(self):
+    def onCreateFromT1Clicked(self):
         with slicer.util.WaitCursor():
             segmentationNodeBET = self.logic.register_and_brain_mask(
                 inputCT=self._parameterNode.inputCT,
                 inputT1=self._parameterNode.inputT1,
-                metalThreshold=self._parameterNode.metalThreshold_HU,
+                metalThreshold_HU=self._parameterNode.metalThreshold_HU,
                 skipRegistration=self._parameterNode.skipRegistration,
                 saveBrainMask=self._parameterNode.saveBrainMask,
                 brainMaskPath=self.ui.pathLineEditBrainMask.currentPath
@@ -485,15 +487,15 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         if self._parameterNode.inputT1 is None:
             missing.append("T1")
         if missing:
-            self.ui.buttonCreateBrainMask.setEnabled(False)
+            self.ui.buttonCreateFromT1.setEnabled(False)
             self.ui.pathLineEditBrainMask.setEnabled(False)
-            self.ui.buttonCreateBrainMask.setToolTip(f"Missing input(s): {', '.join(missing)}")
+            self.ui.buttonCreateFromT1.setToolTip(f"Missing input(s): {', '.join(missing)}")
             self.ui.pathLineEditBrainMask.setToolTip(f"Missing input(s): {', '.join(missing)}")
             self.ui.pathLineEditBrainMask.currentPath = ""
         else:
-            self.ui.buttonCreateBrainMask.setEnabled(True)
+            self.ui.buttonCreateFromT1.setEnabled(True)
             self.ui.pathLineEditBrainMask.setEnabled(True)
-            self.ui.buttonCreateBrainMask.setToolTip("")
+            self.ui.buttonCreateFromT1.setToolTip("Register T1 to CT and create brain mask using HD-BET.")
             self.ui.pathLineEditBrainMask.setToolTip("")
 
         # disable rendering buttons and slice views if CT is not selected
@@ -505,10 +507,10 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
             self.ui.buttonShowCT.setToolTip("Missing CT image")
         else:
             self.ui.collapsibleButtonRendering.setEnabled(True)
-            self.ui.collapsibleButtonRendering.setToolTip("")
+            self.ui.collapsibleButtonRendering.setToolTip("View the CT in 3D. 'Head' renders all tissue above the metal threshold; 'Metal' renders only regions above the metal threshold.")
 
             self.ui.buttonShowCT.setEnabled(True)
-            self.ui.buttonShowCT.setToolTip("")
+            self.ui.buttonShowCT.setToolTip("Set the slice views to display the CT image.")
 
         # disable run button if any input is missing
         missing = []
@@ -1340,7 +1342,7 @@ class SEEGContactDetectorTest(ScriptedLoadableModuleTest):
                 self.delayDisplay("Bolt segmentation")
                 logic.bolt_segmentation(inputCT,
                                         electrodes,
-                                        logic.getParameterNode().boltSphereRadius_mm,
+                                        logic.getParameterNode().boltRadius_mm,
                                         logic.getParameterNode().metalThreshold_HU,
                                         False)
                 self.delayDisplay("Bolt axis estimation")
@@ -1358,7 +1360,7 @@ class SEEGContactDetectorTest(ScriptedLoadableModuleTest):
                 self.delayDisplay("Curve fitting")
                 logic.curve_fitting(inputCT,
                                     electrodes,
-                                    logic.getParameterNode().boltSphereRadius_mm,
+                                    logic.getParameterNode().boltRadius_mm,
                                     logic.getParameterNode().blobSize_sigma,
                                     logic.getParameterNode().contactDiameter_mm,
                                     logic.getParameterNode().contactLength_mm,

@@ -46,8 +46,8 @@
 - [ ] add module description, help and acknowledgement
 - [x] icon
 - [x] mrml scene (ocean, etc)
-- [ ] Sample data (defaced)
-- [ ] Tests
+- [x] Sample data (defaced)
+- [x] Tests
 - [ ] Documentation
 - [ ] GitHub description
 - [ ] Check CMakeLists

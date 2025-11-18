@@ -32,8 +32,8 @@ class SEEGContactDetector(ScriptedLoadableModule):
     def __init__(self, parent):
         ScriptedLoadableModule.__init__(self, parent)
         self.parent.title = _("SEEG Contact Detector")
-        self.parent.categories = [translate("qSlicerAbstractCoreModule", "IGT")]
-        self.parent.dependencies = ["HDBrainExtractionTool"]  # TODO: add here list of module names that this module requires
+        self.parent.categories = [translate("qSlicerAbstractCoreModule", "IGT")] # set categories (folders where the module shows up in the module selector)
+        self.parent.dependencies = ["HDBrainExtractionTool"]  # add here list of module names that this module requires
         self.parent.contributors = ["Jakub Smid (CTU in Prague, Charles University)", "Radek Janca (CTU in Prague)"]
         # TODO: update with short description of the module and a link to online module documentation
         # _() function marks text as translatable to other languages
@@ -41,14 +41,19 @@ class SEEGContactDetector(ScriptedLoadableModule):
 This is an example of scripted loadable module bundled in an extension.
 See more information in <a href="https://github.com/organization/projectname#SEEGContactDetector">module documentation</a>.
 """)
-        # TODO: replace with organization, grant and thanks
+        # organization, grant and thanks
         self.parent.acknowledgementText = _("""
-This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc., Andras Lasso, PerkLab,
-and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
+The implementation builds upon the design published in [1], employing standard 3D Slicer functionalities and relying on the external 3D Slicer extenstion <i>HDBrainExtraction</i> which is based on HD-BET [2].
+<h4>References</h4>
+<ul style="list-style-type: none">
+<li id="ref1">[1] Janca, Radek, et al. "Automated identification of stereoelectroencephalography contacts and measurement of factors influencing accuracy of frame stereotaxy." <i>IEEE Journal of Biomedical and Health Informatics 27.7 (2023): 3326-3336.</li>
+<li id="ref2">[2] Isensee F, Schell M, Tursunova I, Brugnara G, Bonekamp D, Neuberger U, Wick A, Schlemmer HP, Heiland S, Wick W, Bendszus M, Maier-Hein KH, Kickingereder P. Automated brain extraction of multi-sequence MRI using artificial neural networks. Hum Brain Mapp. 2019; 1–13. <a href="https://doi.org/10.1002/hbm.24750">https://doi.org/10.1002/hbm.24750</li>
+</ul>
+<p>This work was supported by the Ministry of Health of the Czech Republic (grant projects AZV NU23-08-00528, NW25-04-00427, NW25-08-00371); project number LX22NPO5107 (MEYS), financed by EU—Next Generation EU; ERDF-Project Brain Dynamics (No. CZ.02.01.01/00/22_008/0004643); and the Grant Agency of the Czech Technical University in Prague (SGS23/170/OHK3/3T/13).</p>
 """)
 
         # Additional initialization step after application startup is complete
-        # slicer.app.connect("startupCompleted()", registerSampleData)
+        slicer.app.connect("startupCompleted()", registerSampleData)
 
 
 #
@@ -68,36 +73,44 @@ def registerSampleData():
     # To ensure that the source code repository remains small (can be downloaded and installed quickly)
     # it is recommended to store data sets that are larger than a few MB in a Github release.
 
-    # SEEGContactDetector1
+    # CT
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
         # Category and sample name displayed in Sample Data module
-        category="SEEGContactDetector",
-        sampleName="SEEGContactDetector1",
+        category="SEEG Contact Detector",
+        sampleName="CT with SEEG electrodes",
         # Thumbnail should have size of approximately 260x280 pixels and stored in Resources/Icons folder.
         # It can be created by Screen Capture module, "Capture all views" option enabled, "Number of images" set to "Single".
         thumbnailFileName=os.path.join(iconsPath, "SEEGContactDetector1.png"),
         # Download URL and target file name
-        uris="https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/998cb522173839c78657f4bc0ea907cea09fd04e44601f17c82ea27927937b95",
-        fileNames="SEEGContactDetector1.nrrd",
+        uris="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases/download/v0.2.0/SampleData_CT_defaced.nii.gz",
+        fileNames="SEEGContactDetector_CT.nii.gz",
         # Checksum to ensure file integrity. Can be computed by this command:
         #  import hashlib; print(hashlib.sha256(open(filename, "rb").read()).hexdigest())
-        checksums="SHA256:998cb522173839c78657f4bc0ea907cea09fd04e44601f17c82ea27927937b95",
+        checksums="SHA256:232c9756f9232c5f9446effce9290f592086a650dc3bb22018d49ad9f24b0d1e",
         # This node name will be used when the data set is loaded
-        nodeNames="SEEGContactDetector1",
+        nodeNames="CT with SEEG electrodes",
     )
 
-    # SEEGContactDetector2
+    # T1
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
-        # Category and sample name displayed in Sample Data module
-        category="SEEGContactDetector",
-        sampleName="SEEGContactDetector2",
+        category="SEEG Contact Detector",
+        sampleName="Preoperative T1",
         thumbnailFileName=os.path.join(iconsPath, "SEEGContactDetector2.png"),
-        # Download URL and target file name
-        uris="https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/1a64f3f422eb3d1c9b093d1a18da354b13bcf307907c66317e2463ee530b7a97",
-        fileNames="SEEGContactDetector2.nrrd",
-        checksums="SHA256:1a64f3f422eb3d1c9b093d1a18da354b13bcf307907c66317e2463ee530b7a97",
-        # This node name will be used when the data set is loaded
-        nodeNames="SEEGContactDetector2",
+        uris="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases/download/v0.2.0/SampleData_T1_defaced.nii.gz",
+        fileNames="SEEGContactDetector_T1.nii.gz",
+        checksums="SHA256:355bd49dcb51d1da07dd4f170dc892115f61f1cff840309cd93b2f879e5be7ab",
+        nodeNames="Preoperative T1",
+    )
+
+    # bolt fiducials
+    SampleData.SampleDataLogic.registerCustomSampleDataSource(
+        category="SEEG Contact Detector",
+        sampleName="Bolt fiducials",
+        thumbnailFileName=os.path.join(iconsPath, "SEEGContactDetector2.png"),
+        uris="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases/download/v0.2.0/SampleData_BoltFiducials.fcsv",
+        fileNames="SEEGContactDetector_BoltFiducials.fcsv",
+        checksums="SHA256:ac4b819f6c5fc10f831133db4e05a21b19a43ff8170ae48b7c00d9dec5821633",
+        nodeNames="Bolt fiducials",
     )
 
 
@@ -452,54 +465,17 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
     def onCreateBrainMaskClicked(self):
         with slicer.util.WaitCursor():
-            # coregister T1 to CT
-            fixedVolumeNode = self._parameterNode.inputCT
-            movingVolumeNode = self._parameterNode.inputT1
-
-            if not self._parameterNode.skipRegistration:
-                # create ROI segmentation for registration
-                segmentationNodeROI = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
-                segmentationNodeROI.SetReferenceImageGeometryParameterFromVolumeNode(self._parameterNode.inputCT)
-                segmentationNodeROI.CreateDefaultDisplayNodes()
-                segmentId = segmentationNodeROI.GetSegmentation().AddEmptySegment()
-                segmentationNodeROI.GetSegmentation().GetSegment(segmentId)
-                segmentation_array = (slicer.util.arrayFromVolume(fixedVolumeNode) < self._parameterNode.metalThreshold_HU).astype(np.uint8)
-                slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_array, segmentationNodeROI, segmentId)
-
-                transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode", slicer.mrmlScene.GenerateUniqueName("Transform T1 to CT"))
-
-                # Run registration
-                parameters = {}
-                parameters["fixedVolume"] = fixedVolumeNode.GetID()
-                parameters["movingVolume"] = movingVolumeNode.GetID()
-                parameters["linearTransform"] = transformNode.GetID()
-                parameters["useRigid"] = True
-                parameters["samplingPercentage"] = 0.01
-                parameters["initializeTransformMode"] = "useGeometryAlign"
-                parameters["maskProcessingMode"] = "ROI"
-                parameters["fixedBinaryVolume"] = segmentationNodeROI.GetID()
-                cliBrainsFitRigidNode = slicer.cli.run(slicer.modules.brainsfit, None, parameters, wait_for_completion=True)
-
-                # remove ROI segmentation
-                slicer.mrmlScene.RemoveNode(segmentationNodeROI)
-
-            segmentationNodeBET = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", slicer.mrmlScene.GenerateUniqueName("CT Brain mask"))
-
-            # run HD-BET
-            import HDBrainExtractionTool as hd_bet
-            hd_bet_logic = hd_bet.HDBrainExtractionToolLogic()
-            hd_bet_logic.setupPythonRequirements()
-            hd_bet_logic.process(self._parameterNode.inputT1, None, segmentationNodeBET, "cpu")
-            if not self._parameterNode.skipRegistration:
-                segmentationNodeBET.SetAndObserveTransformNodeID(transformNode.GetID())
-                segmentationNodeBET.HardenTransform()
+            segmentationNodeBET = self.logic.register_and_brain_mask(
+                inputCT=self._parameterNode.inputCT,
+                inputT1=self._parameterNode.inputT1,
+                metalThreshold=self._parameterNode.metalThreshold_HU,
+                skipRegistration=self._parameterNode.skipRegistration,
+                saveBrainMask=self._parameterNode.saveBrainMask,
+                brainMaskPath=self.ui.pathLineEditBrainMask.currentPath
+            )
 
             # update parameter node
             self._parameterNode.brainMask = segmentationNodeBET
-
-            # save segmentation
-            if self._parameterNode.saveBrainMask:
-                slicer.util.saveNode(segmentationNodeBET, self.ui.pathLineEditBrainMask.currentPath)
 
     def updateGUIFromParameterNode(self, caller, event):
         # check skull stripping buttons availability
@@ -689,6 +665,61 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
 
     def getParameterNode(self):
         return SEEGContactDetectorParameterNode(super().getParameterNode())
+    
+    def register_and_brain_mask(self,
+            inputCT: vtkMRMLScalarVolumeNode,
+            inputT1: vtkMRMLScalarVolumeNode,
+            metalThreshold_HU: float,
+            skipRegistration: bool,
+            saveBrainMask: bool,
+            brainMaskPath: str) -> vtkMRMLSegmentationNode:
+                # coregister T1 to CT
+                fixedVolumeNode = inputCT
+                movingVolumeNode = inputT1
+
+                if not skipRegistration:
+                    # create ROI segmentation for registration
+                    segmentationNodeROI = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
+                    segmentationNodeROI.SetReferenceImageGeometryParameterFromVolumeNode(inputCT)
+                    segmentationNodeROI.CreateDefaultDisplayNodes()
+                    segmentId = segmentationNodeROI.GetSegmentation().AddEmptySegment()
+                    segmentationNodeROI.GetSegmentation().GetSegment(segmentId)
+                    segmentation_array = (slicer.util.arrayFromVolume(fixedVolumeNode) < metalThreshold_HU).astype(np.uint8)
+                    slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_array, segmentationNodeROI, segmentId)
+
+                    transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode", slicer.mrmlScene.GenerateUniqueName("Transform T1 to CT"))
+
+                    # Run registration
+                    parameters = {}
+                    parameters["fixedVolume"] = fixedVolumeNode.GetID()
+                    parameters["movingVolume"] = movingVolumeNode.GetID()
+                    parameters["linearTransform"] = transformNode.GetID()
+                    parameters["useRigid"] = True
+                    parameters["samplingPercentage"] = 0.01
+                    parameters["initializeTransformMode"] = "useGeometryAlign"
+                    parameters["maskProcessingMode"] = "ROI"
+                    parameters["fixedBinaryVolume"] = segmentationNodeROI.GetID()
+                    cliBrainsFitRigidNode = slicer.cli.run(slicer.modules.brainsfit, None, parameters, wait_for_completion=True)
+
+                    # remove ROI segmentation
+                    slicer.mrmlScene.RemoveNode(segmentationNodeROI)
+
+                segmentationNodeBET = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", slicer.mrmlScene.GenerateUniqueName("CT Brain mask"))
+
+                # run HD-BET
+                import HDBrainExtractionTool as hd_bet
+                hd_bet_logic = hd_bet.HDBrainExtractionToolLogic()
+                hd_bet_logic.setupPythonRequirements()
+                hd_bet_logic.process(inputT1, None, segmentationNodeBET, "cpu")
+                if not skipRegistration:
+                    segmentationNodeBET.SetAndObserveTransformNodeID(transformNode.GetID())
+                    segmentationNodeBET.HardenTransform()
+
+                # save segmentation
+                if saveBrainMask:
+                    slicer.util.saveNode(segmentationNodeBET, brainMaskPath)
+
+                return segmentationNodeBET
     
     def update_fiducials(self,
                         inputCT: vtkMRMLScalarVolumeNode,
@@ -1288,30 +1319,53 @@ class SEEGContactDetectorTest(ScriptedLoadableModuleTest):
         import SampleData
 
         registerSampleData()
-        inputVolume = SampleData.downloadSample("SEEGContactDetector1")
+
+        inputCT = SampleData.downloadSample("CT with SEEG electrodes")
+        inputT1 = SampleData.downloadSample("Preoperative T1")
+        fiducials = SampleData.downloadSample("Bolt fiducials")
         self.delayDisplay("Loaded test data set")
 
-        inputScalarRange = inputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(inputScalarRange[0], 0)
-        self.assertEqual(inputScalarRange[1], 695)
+        # Logic testing is disabled by default to not overload automatic build machines (pytorch is a huge package).
+        # Set testLogic to True to enable testing.
+        testLogic = True
 
-        outputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode")
-        threshold = 100
-
-        # Test the module logic
-
-        logic = SEEGContactDetectorLogic()
-
-        # Test algorithm with non-inverted threshold
-        logic.process(inputVolume, outputVolume, threshold, True)
-        outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-        self.assertEqual(outputScalarRange[1], threshold)
-
-        # Test algorithm with inverted threshold
-        logic.process(inputVolume, outputVolume, threshold, False)
-        outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-        self.assertEqual(outputScalarRange[1], inputScalarRange[1])
-
+        if testLogic:
+            with slicer.util.WaitCursor():
+                logic = SEEGContactDetectorLogic()
+                self.delayDisplay("Registering and brain masking")
+                brainMask = logic.register_and_brain_mask(inputCT, inputT1, logic.getParameterNode().metalThreshold_HU, False, False, None)
+                slicer.util.setSliceViewerLayers(inputCT, fit=True) # refocus to CT
+                self.delayDisplay("Loading electrodes")
+                electrodes = logic.load_electrodes(fiducials, logic.getParameterNode().contactLength_mm, logic.getParameterNode().contactGap_mm)
+                self.delayDisplay("Bolt segmentation")
+                logic.bolt_segmentation(inputCT,
+                                        electrodes,
+                                        logic.getParameterNode().boltSphereRadius_mm,
+                                        logic.getParameterNode().metalThreshold_HU,
+                                        False)
+                self.delayDisplay("Bolt axis estimation")
+                logic.bolt_axis_estimation(inputCT,
+                                        brainMask,
+                                        electrodes,
+                                        False)
+                self.delayDisplay("Electrode segmentation")
+                logic.eletrode_segmentation(inputCT,
+                                            brainMask,
+                                            electrodes,
+                                            logic.getParameterNode().contactDiameter_mm,
+                                            logic.getParameterNode().metalThreshold_HU,
+                                            False)
+                self.delayDisplay("Curve fitting")
+                logic.curve_fitting(inputCT,
+                                    electrodes,
+                                    logic.getParameterNode().boltSphereRadius_mm,
+                                    logic.getParameterNode().blobSize_sigma,
+                                    logic.getParameterNode().contactDiameter_mm,
+                                    logic.getParameterNode().contactLength_mm,
+                                    logic.getParameterNode().contactGap_mm,
+                                    logic.getParameterNode().metalThreshold_HU,
+                                    False)
+            
+        else:
+            logging.warning("Skipping SEEGContactDetector logic test")
         self.delayDisplay("Test passed")

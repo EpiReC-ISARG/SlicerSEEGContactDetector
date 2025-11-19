@@ -201,23 +201,44 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QRadioButton" name="radioButtonRenderingDisabled">
-        <property name="text">
-         <string>Disabled</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QRadioButton" name="radioButtonRenderingHead">
+        <property name="toolTip">
+         <string>Render the CT head in 3D, displaying all tissue across the full intensity range. (F5)</string>
+        </property>
         <property name="text">
          <string>Head</string>
+        </property>
+        <property name="shortcut">
+         <string>F5</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QRadioButton" name="radioButtonRenderingMetal">
+        <property name="toolTip">
+         <string>Renders only regions above the metal threshold. (F6)</string>
+        </property>
         <property name="text">
          <string>Metal</string>
+        </property>
+        <property name="shortcut">
+         <string>F6</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButtonRenderingDisabled">
+        <property name="toolTip">
+         <string>Disable rendering (F7)</string>
+        </property>
+        <property name="text">
+         <string>Disabled</string>
+        </property>
+        <property name="shortcut">
+         <string>F7</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>

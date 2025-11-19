@@ -469,7 +469,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="buttonPlaceElectrodeTIP">
         <property name="toolTip">
          <string>Check if you want to place the TIP of the selected electrode.</string>
         </property>

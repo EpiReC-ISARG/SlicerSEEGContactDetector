@@ -189,7 +189,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
     def __init__(self, parent=None) -> None:
         """Called when the user opens the module the first time and the widget is initialized."""
         ScriptedLoadableModuleWidget.__init__(self, parent)
-        # VTKObservationMixin.__init__(self)  # needed for parameter node observation
+        VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
         self._parameterNode = None
         self._parameterNodeGuiTag = None
@@ -197,8 +197,9 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         self.lastSelectedBoltFiducials = None # store the last selected fiducial node to remove observer after GUI is changed
 
         self.electrodes: list[Electrode] = []
-        self.selected_electrode = None
-        self.result_markup_node = None
+        self.bolt_list_selected_index = 0
+        self.detected_list_selected_electrode = None
+        self.detected_list_markup_node = None
 
     def setup(self) -> None:
         """Called when the user opens the module the first time and the widget is initialized."""
@@ -227,6 +228,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         # Connections
 
         self.ui.comboBoxCT.connect('currentNodeChanged(vtkMRMLNode*)', self.onComboBoxCTChanged)
+        self.ui.SimpleMarkupsWidgetInput.connect('currentMarkupsControlPointSelectionChanged(int)', self.onMarkupsWidgetInputSelectionChanged)
         self.ui.SimpleMarkupsWidgetEstimatedContacts.connect('currentMarkupsControlPointSelectionChanged(int)', self.onMarkupsWidgetEstimatedContactsSelectionChanged)
         self.ui.SimpleMarkupsWidgetEstimatedContacts.connect('markupsNodeChanged()', self.onMarkupsWidgetEstimatedContactsMarkupsNodeChanged)
         self.ui.spinBoxShiftElectrodeByContact.connect('valueChanged(int)', self.onSpinBoxShiftElectrodeByContactChanged)
@@ -240,8 +242,9 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         self.ui.radioButtonRenderingHead.connect("clicked(bool)", self.onRenderingHeadClicked)
         self.ui.radioButtonRenderingDisabled.connect("clicked(bool)", self.onRenderingDisabledClicked)
 
-        self.ui.buttonRun.connect("clicked(bool)", self.onRunClicked)
+        self.ui.buttonPlaceElectrodeTIP.connect("clicked(bool)", lambda: slicer.modules.markups.logic().StartPlaceMode(0))
 
+        self.ui.buttonRun.connect("clicked(bool)", self.onRunClicked)
         self.ui.buttonViewInScene.connect("clicked(bool)", self.onViewInSceneClicked)
 
         # developerMode
@@ -252,6 +255,9 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
+
+    def onMarkupsWidgetInputSelectionChanged(self, markupIndex):
+        self.bolt_list_selected_index = markupIndex
 
     def onViewInSceneClicked(self):
         with slicer.util.RenderBlocker():
@@ -294,9 +300,9 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                 self._parameterNode.boltFiducials.SetDisplayVisibility(False)
 
             # show estimated contacts as thick cross
-            if self.result_markup_node:
-                self.result_markup_node.SetDisplayVisibility(True)
-                self.result_markup_node.GetDisplayNode().SetGlyphTypeFromString("ThickCross2D")
+            if self.detected_list_markup_node:
+                self.detected_list_markup_node.SetDisplayVisibility(True)
+                self.detected_list_markup_node.GetDisplayNode().SetGlyphTypeFromString("ThickCross2D")
 
     def onRunClicked(self):
         progressbar = slicer.util.createProgressDialog(windowTitle="Detecting contacts")
@@ -321,29 +327,29 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         progressbar.value = 100
 
     def onSpinBoxShiftElectrodeMicrostepChanged(self, spin_box_value):
-        self.selected_electrode.curve_points_offset = spin_box_value
+        self.detected_list_selected_electrode.curve_points_offset = spin_box_value
         self.logic.update_fiducials(self._parameterNode.inputCT,
-                                    self.result_markup_node,
-                                    self.selected_electrode,
+                                    self.detected_list_markup_node,
+                                    self.detected_list_selected_electrode,
                                     self._parameterNode.contactLength_mm,
                                     self._parameterNode.contactGap_mm)
         
     def onSpinBoxShiftElectrodeByContactChanged(self, spin_box_value):
-        self.selected_electrode.shift_fiducials_value = spin_box_value
+        self.detected_list_selected_electrode.shift_fiducials_value = spin_box_value
         self.logic.update_fiducials(self._parameterNode.inputCT,
-                                    self.result_markup_node,
-                                    self.selected_electrode,
+                                    self.detected_list_markup_node,
+                                    self.detected_list_selected_electrode,
                                     self._parameterNode.contactLength_mm,
                                     self._parameterNode.contactGap_mm)
 
     def onMarkupsWidgetEstimatedContactsSelectionChanged(self, markupIndex):
-        selected_label = self.result_markup_node.GetNthControlPointLabel(markupIndex)
+        selected_label = self.detected_list_markup_node.GetNthControlPointLabel(markupIndex)
         selected_label = re.sub(r"\d+$", "", selected_label) # remove trailing number
 
         # find electrode by name
         for electrode in self.electrodes:
             if electrode.label_prefix == selected_label:
-                self.selected_electrode = electrode
+                self.detected_list_selected_electrode = electrode
                 self.ui.labelShiftElectrodeByContact.setText(f"Shift {electrode.label_prefix} fiducials by contact:")
                 self.ui.labelShiftElectrodeMicrostep.setText(f"Shift {electrode.label_prefix} fiducials (microsteps, approx. 0.1 mm):")
 
@@ -359,14 +365,14 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
     def onMarkupsWidgetEstimatedContactsMarkupsNodeChanged(self):
         # check for invalid markup node in the list (result markup node has been probably deleted)
-        if self.ui.SimpleMarkupsWidgetEstimatedContacts.currentNode() is not self.result_markup_node:
+        if self.ui.SimpleMarkupsWidgetEstimatedContacts.currentNode() is not self.detected_list_markup_node:
             self.ui.shiftFiducialsWidget.setVisible(False)
             self.ui.SimpleMarkupsWidgetEstimatedContacts.setCurrentNode(None)
-            self.result_markup_node = None
+            self.detected_list_markup_node = None
 
     def onCurveFittingClicked(self):
         with slicer.util.WaitCursor():
-            self.result_markup_node = self.logic.curve_fitting(self._parameterNode.inputCT,
+            self.detected_list_markup_node = self.logic.curve_fitting(self._parameterNode.inputCT,
                                                                self.electrodes,
                                                                self._parameterNode.boltRadius_mm,
                                                                self._parameterNode.blobSize_sigma,
@@ -382,7 +388,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         self.ui.shiftFiducialsWidget.setVisible(True)
 
         # show markupsNode in the list widget
-        self.ui.SimpleMarkupsWidgetEstimatedContacts.setCurrentNode(self.result_markup_node)
+        self.ui.SimpleMarkupsWidgetEstimatedContacts.setCurrentNode(self.detected_list_markup_node)
         
         # highlight the first control point
         self.ui.SimpleMarkupsWidgetEstimatedContacts.setJumpToSliceEnabled(False)
@@ -528,17 +534,23 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
             self.ui.buttonRun.setToolTip("")
 
         # update markup widgets based on selected point list
+        slicer.modules.markups.logic().SetActiveList(self._parameterNode.boltFiducials)
         self.ui.MarkupsPlaceWidget.setCurrentNode(self._parameterNode.boltFiducials)
         self.ui.SimpleMarkupsWidgetInput.setCurrentNode(self._parameterNode.boltFiducials)
 
         # add observer for changing control point label
         if self.lastSelectedBoltFiducials is not None:
             self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
+            self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.onControlPointDefined)
             self.lastSelectedBoltFiducials = None
 
         if self._parameterNode.boltFiducials is not None:
             self.lastSelectedBoltFiducials = self._parameterNode.boltFiducials
+            self.ui.buttonPlaceElectrodeTIP.setEnabled(True)
             self.addObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
+            self.addObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.onControlPointDefined)
+        else:
+            self.ui.buttonPlaceElectrodeTIP.setEnabled(False)
 
     def volumeModified(self, caller, event):
         if self._parameterNode.inputCT.GetStorageNode() and self._parameterNode.saveBrainMask:
@@ -561,11 +573,27 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         if "mask" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['brainMask']):
             self._parameterNode.brainMask = node
 
+    def onControlPointDefined(self, caller, event):
+        self._parameterNode.placeElectrodeTip = False
+        
+    def index_to_letters(self, index: int) -> str:
+        result = ""
+        while index > 0:
+            index, remainder = divmod(index - 1, 26)
+            result = chr(65 + remainder) + result
+        return result
+
     def onControlPointAdded(self, caller, event):
-        # rename new control point as A-no, B-no, etc
-        if self.ui.MarkupsPlaceWidget.placeModeEnabled:
-            n = caller.GetNumberOfControlPoints()
-            label = f"{chr(ord('A') + n - 1)}-no"
+        n = caller.GetNumberOfControlPoints()
+        if self._parameterNode.placeElectrodeTip and self._parameterNode.boltFiducials and n-1 > self.bolt_list_selected_index:
+            label = caller.GetNthControlPointLabel(self.bolt_list_selected_index)
+            label = re.sub(r"\d+$", "", label) # remove trailing number
+            label = f"{label}1"
+            caller.SetNthControlPointLabel(n-1, label)
+        else:
+            # rename new control point as A-no, B-no, etc
+            letters = self.index_to_letters(n)
+            label = f"{letters}-no"
             caller.SetNthControlPointLabel(n-1, label)
 
     def cleanup(self) -> None:
@@ -586,9 +614,11 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
             self.removeObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self.updateGUIFromParameterNode)
             self.removeObserver(slicer.mrmlScene, slicer.vtkMRMLScene.NodeAddedEvent, self.onNodeAdded)
-            if self.hasObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded):
+            if self.lastSelectedBoltFiducials:
+                self.ui.buttonPlaceElectrodeTIP.setEnabled(False)
                 self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
-            self.lastSelectedBoltFiducials = None
+                self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.onControlPointDefined)
+                self.lastSelectedBoltFiducials = None
 
     def initializeParameterNode(self) -> None:
         """Ensure parameter node exists and observed."""

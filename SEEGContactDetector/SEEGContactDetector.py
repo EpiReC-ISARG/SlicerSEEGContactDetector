@@ -3,6 +3,7 @@ import os
 from typing import Annotated, Optional
 import re
 
+import qt
 import vtk
 
 import slicer
@@ -194,6 +195,9 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         self._parameterNode = None
         self._parameterNodeGuiTag = None
 
+        self.icon_invisible = qt.QIcon(':/Icons/Medium/SlicerInvisible.png')
+        self.icon_visible = qt.QIcon(':/Icons/Medium/SlicerVisible.png')
+
         self.lastSelectedBoltFiducials = None # store the last selected fiducial node to remove observer after GUI is changed
 
         self.electrodes: list[Electrode] = []
@@ -244,6 +248,9 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
         self.ui.buttonPlaceElectrodeTIP.connect("clicked(bool)", lambda: slicer.modules.markups.logic().StartPlaceMode(0))
 
+        self.ui.buttonHideDetectedContacts.setIcon(self.icon_visible)
+        self.ui.buttonHideDetectedContacts.connect("clicked(bool)", self.onHideDetectedContactsClicked)
+
         self.ui.buttonRun.connect("clicked(bool)", self.onRunClicked)
         self.ui.buttonViewInScene.connect("clicked(bool)", self.onViewInSceneClicked)
 
@@ -255,6 +262,11 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
+
+    def onHideDetectedContactsClicked(self):
+        state = self.detected_list_markup_node.GetDisplayVisibility()
+        self.detected_list_markup_node.SetDisplayVisibility(not state)
+        self.ui.buttonHideDetectedContacts.setIcon(self.icon_invisible if state else self.icon_visible)
 
     def onMarkupsWidgetInputSelectionChanged(self, markupIndex):
         self.bolt_list_selected_index = markupIndex
@@ -302,7 +314,6 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
             # show estimated contacts as thick cross
             if self.detected_list_markup_node:
                 self.detected_list_markup_node.SetDisplayVisibility(True)
-                self.detected_list_markup_node.GetDisplayNode().SetGlyphTypeFromString("ThickCross2D")
 
     def onRunClicked(self):
         progressbar = slicer.util.createProgressDialog(windowTitle="Detecting contacts")
@@ -372,6 +383,10 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
     def onCurveFittingClicked(self):
         with slicer.util.WaitCursor():
+            if self.detected_list_markup_node is not None:
+                self.detected_list_markup_node.SetDisplayVisibility(False)
+                self.removeObserver(self.detected_list_markup_node, vtk.vtkCommand.ModifiedEvent, self.onDetectedListMarkupNodeModified)
+
             self.detected_list_markup_node = self.logic.curve_fitting(self._parameterNode.inputCT,
                                                                self.electrodes,
                                                                self._parameterNode.boltRadius_mm,
@@ -394,6 +409,15 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         self.ui.SimpleMarkupsWidgetEstimatedContacts.setJumpToSliceEnabled(False)
         self.ui.SimpleMarkupsWidgetEstimatedContacts.highlightNthControlPoint(0)
         self.ui.SimpleMarkupsWidgetEstimatedContacts.setJumpToSliceEnabled(True)
+
+        # update markup display
+        self.detected_list_markup_node.GetDisplayNode().SetGlyphTypeFromString("ThickCross2D")
+        self.addObserver(self.detected_list_markup_node, vtk.vtkCommand.ModifiedEvent, self.onDetectedListMarkupNodeModified)
+        self.onDetectedListMarkupNodeModified(None, None)
+
+    def onDetectedListMarkupNodeModified(self, caller, event):
+        # set label of the detected point list
+        self.ui.labelDetectedPointList.setText(self.detected_list_markup_node.GetName())
 
     def onElectrodeSegmentationClicked(self):
         with slicer.util.WaitCursor():
@@ -547,6 +571,9 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         if self._parameterNode.boltFiducials is not None:
             self.lastSelectedBoltFiducials = self._parameterNode.boltFiducials
             self.ui.buttonPlaceElectrodeTIP.setEnabled(True)
+            self._parameterNode.boltFiducials.GetDisplayNode().SetSelectedColor(0,0,1)
+            self._parameterNode.boltFiducials.GetDisplayNode().SetGlyphTypeFromString("StarBurst2D")
+
             self.addObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
             self.addObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.onControlPointDefined)
         else:
@@ -585,7 +612,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
     def onControlPointAdded(self, caller, event):
         n = caller.GetNumberOfControlPoints()
-        if self._parameterNode.placeElectrodeTip and self._parameterNode.boltFiducials and n-1 > self.bolt_list_selected_index:
+        if self._parameterNode.placeElectrodeTip and n-1 > self.bolt_list_selected_index:
             label = caller.GetNthControlPointLabel(self.bolt_list_selected_index)
             label = re.sub(r"\d+$", "", label) # remove trailing number
             label = f"{label}1"

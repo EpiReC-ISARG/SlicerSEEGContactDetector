@@ -19,9 +19,9 @@
 
 # Visualization
 - [x] debug checkbox to enable visualization
-- [ ] smaller cross marker after View in scene (test on Windows)
-- [ ] hide detections from previous run
-- [ ] set cross marker after Run
+- [x] smaller cross marker after View in scene (test on Windows)
+- [x] hide detections from previous run
+- [x] set cross marker after Run
 
 # Debugging
 - [x] check centers of the spheres and of the gaussinan balls
@@ -42,7 +42,7 @@
 # Finalization
 - [x] add parameters into the parameter node and check scene saving
 - [x] remove step-by-step, add event on run all click
-- [ ] create tooltip help
+- [x] create tooltip help
 - [ ] add module description, help and acknowledgement
 - [x] icon
 - [x] mrml scene (ocean, etc)

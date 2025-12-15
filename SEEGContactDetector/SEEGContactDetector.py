@@ -134,7 +134,7 @@ class SEEGContactDetectorParameterNode:
     placeElectrodeTip: bool = False
 
     skipRegistration: bool = False
-    saveBrainMask: bool = True
+    autoSave: bool = True
     metalThreshold_HU: Annotated[float, WithinRange(0, 9999999)] = 3000
     contactLength_mm: Annotated[float, WithinRange(0.1, 100)] = 2
     contactGap_mm: Annotated[float, WithinRange(0.1, 100)] = 1.5
@@ -199,6 +199,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         self.icon_visible = qt.QIcon(':/Icons/Medium/SlicerVisible.png')
 
         self.lastSelectedBoltFiducials = None # store the last selected fiducial node to remove observer after GUI is changed
+        self.bolt_node_imported = False # flag to disable ControlPointAddedEvent when loading bolt fiducials from a file
 
         self.electrodes: list[Electrode] = []
         self.bolt_list_selected_index = 0
@@ -343,7 +344,9 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                                     self.detected_list_markup_node,
                                     self.detected_list_selected_electrode,
                                     self._parameterNode.contactLength_mm,
-                                    self._parameterNode.contactGap_mm)
+                                    self._parameterNode.contactGap_mm,
+                                    self._parameterNode.autoSave,
+                                    self.ui.pathLineEditSavePath.currentPath)
         
     def onSpinBoxShiftElectrodeByContactChanged(self, spin_box_value):
         self.detected_list_selected_electrode.shift_fiducials_value = spin_box_value
@@ -351,7 +354,9 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                                     self.detected_list_markup_node,
                                     self.detected_list_selected_electrode,
                                     self._parameterNode.contactLength_mm,
-                                    self._parameterNode.contactGap_mm)
+                                    self._parameterNode.contactGap_mm,
+                                    self._parameterNode.autoSave,
+                                    self.ui.pathLineEditSavePath.currentPath)
 
     def onMarkupsWidgetEstimatedContactsSelectionChanged(self, markupIndex):
         selected_label = self.detected_list_markup_node.GetNthControlPointLabel(markupIndex)
@@ -395,7 +400,10 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                                                                self._parameterNode.contactLength_mm,
                                                                self._parameterNode.contactGap_mm,
                                                                self._parameterNode.metalThreshold_HU,
-                                                               self._parameterNode.gaussianBalls)
+                                                               self._parameterNode.gaussianBalls,
+                                                               self._parameterNode.boltFiducials,
+                                                               save=self._parameterNode.autoSave,
+                                                               path=self.ui.pathLineEditSavePath.currentPath)
         
         # collapse collapsibleButtonBoltFiducialList and make visible output collapsible button
         self.ui.collapsibleButtonBoltFiducialList.collapsed = True
@@ -489,7 +497,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
             new_ct = slicer.mrmlScene.GetNodeByID(self.ui.comboBoxCT.currentNodeID)
             if new_ct and new_ct.GetStorageNode():
                 ct_path = new_ct.GetStorageNode().GetFullNameFromFileName()
-                self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
+                self.ui.pathLineEditSavePath.currentPath = os.path.dirname(ct_path)
 
     def onShowCTClicked(self):
         slicer.util.setSliceViewerLayers(background = self._parameterNode.inputCT)
@@ -502,15 +510,14 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                 inputT1=self._parameterNode.inputT1,
                 metalThreshold_HU=self._parameterNode.metalThreshold_HU,
                 skipRegistration=self._parameterNode.skipRegistration,
-                saveBrainMask=self._parameterNode.saveBrainMask,
-                brainMaskPath=self.ui.pathLineEditBrainMask.currentPath
-            )
+                save=self._parameterNode.autoSave,
+                path=self.ui.pathLineEditSavePath.currentPath)
 
             # update parameter node
             self._parameterNode.brainMask = segmentationNodeBET
 
     def updateGUIFromParameterNode(self, caller, event):
-        # check skull stripping buttons availability
+        # check skull stripping button availability
         missing = []
         if self._parameterNode.inputCT is None:
             missing.append("CT")
@@ -518,15 +525,10 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
             missing.append("T1")
         if missing:
             self.ui.buttonCreateFromT1.setEnabled(False)
-            self.ui.pathLineEditBrainMask.setEnabled(False)
             self.ui.buttonCreateFromT1.setToolTip(f"Missing input(s): {', '.join(missing)}")
-            self.ui.pathLineEditBrainMask.setToolTip(f"Missing input(s): {', '.join(missing)}")
-            self.ui.pathLineEditBrainMask.currentPath = ""
         else:
             self.ui.buttonCreateFromT1.setEnabled(True)
-            self.ui.pathLineEditBrainMask.setEnabled(True)
             self.ui.buttonCreateFromT1.setToolTip("Register T1 to CT and create brain mask using HD-BET.")
-            self.ui.pathLineEditBrainMask.setToolTip("")
 
         # disable rendering buttons and slice views if CT is not selected
         if self._parameterNode.inputCT is None:
@@ -563,26 +565,27 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         self.ui.SimpleMarkupsWidgetInput.setCurrentNode(self._parameterNode.boltFiducials)
 
         # add observer for changing control point label
-        if self.lastSelectedBoltFiducials is not None:
-            self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
-            self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.onControlPointDefined)
-            self.lastSelectedBoltFiducials = None
+        if self.lastSelectedBoltFiducials != self._parameterNode.boltFiducials:
+            if self.lastSelectedBoltFiducials is not None:
+                self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
+                self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.onControlPointDefined)
 
-        if self._parameterNode.boltFiducials is not None:
-            self.lastSelectedBoltFiducials = self._parameterNode.boltFiducials
-            self.ui.buttonPlaceElectrodeTIP.setEnabled(True)
-            self._parameterNode.boltFiducials.GetDisplayNode().SetSelectedColor(0,0,1)
-            self._parameterNode.boltFiducials.GetDisplayNode().SetGlyphTypeFromString("StarBurst2D")
+            if self._parameterNode.boltFiducials is not None:
+                self.lastSelectedBoltFiducials = self._parameterNode.boltFiducials
+                self.ui.buttonPlaceElectrodeTIP.setEnabled(True)
+                self._parameterNode.boltFiducials.GetDisplayNode().SetSelectedColor(0,0,1)
+                self._parameterNode.boltFiducials.GetDisplayNode().SetGlyphTypeFromString("StarBurst2D")
 
-            self.addObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
-            self.addObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.onControlPointDefined)
-        else:
-            self.ui.buttonPlaceElectrodeTIP.setEnabled(False)
+                self.addObserver(self._parameterNode.boltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
+                self.addObserver(self._parameterNode.boltFiducials, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.onControlPointDefined)
+            else:
+                self.lastSelectedBoltFiducials = None
+                self.ui.buttonPlaceElectrodeTIP.setEnabled(False)
 
     def volumeModified(self, caller, event):
-        if self._parameterNode.inputCT.GetStorageNode() and self._parameterNode.saveBrainMask:
+        if self._parameterNode.inputCT.GetStorageNode():
             ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
-            self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
+            self.ui.pathLineEditSavePath.currentPath = os.path.dirname(ct_path)
 
     @vtk.calldata_type(vtk.VTK_OBJECT)
     def onNodeAdded(self, caller, event,  node):
@@ -596,6 +599,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
     
         if "fiducials" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['boltFiducials']):
             self._parameterNode.boltFiducials = node
+            self.bolt_node_imported = True
 
         if "mask" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['brainMask']):
             self._parameterNode.brainMask = node
@@ -611,6 +615,10 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         return result
 
     def onControlPointAdded(self, caller, event):
+        if self.bolt_node_imported:
+            self.bolt_node_imported = False
+            return
+        
         n = caller.GetNumberOfControlPoints()
         if self._parameterNode.placeElectrodeTip and n-1 > self.bolt_list_selected_index:
             label = caller.GetNthControlPointLabel(self.bolt_list_selected_index)
@@ -662,7 +670,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                     self._parameterNode.inputCT = node
                     if node.GetStorageNode():
                         ct_path = node.GetStorageNode().GetFullNameFromFileName()
-                        self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
+                        self.ui.pathLineEditSavePath.currentPath = os.path.dirname(ct_path)
                 if "t1" in node.GetName().lower():
                     self._parameterNode.inputT1 = node
             
@@ -730,8 +738,8 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
             inputT1: vtkMRMLScalarVolumeNode,
             metalThreshold_HU: float,
             skipRegistration: bool,
-            saveBrainMask: bool,
-            brainMaskPath: str) -> vtkMRMLSegmentationNode:
+            save: bool,
+            path: str) -> vtkMRMLSegmentationNode:
                 # coregister T1 to CT
                 fixedVolumeNode = inputCT
                 movingVolumeNode = inputT1
@@ -775,8 +783,9 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
                     segmentationNodeBET.HardenTransform()
 
                 # save segmentation
-                if saveBrainMask:
-                    slicer.util.saveNode(segmentationNodeBET, brainMaskPath)
+                if save and path:
+                    slicer.util.saveNode(segmentationNodeBET, os.path.join(path, "CT_brain_mask_autosave.seg.nrrd"))
+                    slicer.util.saveNode(transformNode, os.path.join(path, "transform_T1_to_CT_autosave.h5"))
 
                 return segmentationNodeBET
     
@@ -785,7 +794,9 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
                         fiducial_node: vtkMRMLScalarVolumeNode,
                         selected_electrode: Electrode,
                         contactLength_mm: float,
-                        contactGap_mm: float):
+                        contactGap_mm: float,
+                        save: bool,
+                        path: str):
         selected_points = self.select_contact_points(selected_electrode,
                                                      contactLength_mm,
                                                      contactGap_mm,
@@ -805,6 +816,10 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
                     continue
                 point = self.IJK_to_RAS(point[::-1], inputCT)
                 fiducial_node.SetNthControlPointPosition(fiducial_idx, point)
+
+        # save updated fiducials
+        if save and path:
+            slicer.util.saveNode(fiducial_node, os.path.join(path, "contacts_autosave.fcsv"))
     
     def curve_fitting(self,
             inputCT: vtkMRMLScalarVolumeNode,
@@ -815,7 +830,10 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
             contact_length_mm: float,
             contact_gap_mm: float,
             metal_threshold: float,
-            show_gaussian_balls: bool):
+            show_gaussian_balls: bool,
+            boltFiducials: vtkMRMLMarkupsFiducialNode,
+            save: bool,
+            path: str):
         # import or install dependencies
         try:
             import scipy
@@ -993,6 +1011,11 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
             for i, point in enumerate(points_best_fit):
                 point = self.IJK_to_RAS(point[::-1], inputCT)
                 markupsNode.AddControlPoint(point, f"{electrode.label_prefix}{i+1}")
+
+        # save detections
+        if save and path:
+            slicer.util.saveNode(boltFiducials, os.path.join(path, "bolt_fiducials_autosave.fcsv"))
+            slicer.util.saveNode(markupsNode, os.path.join(path, "contacts_autosave.fcsv"))
 
         return markupsNode
 

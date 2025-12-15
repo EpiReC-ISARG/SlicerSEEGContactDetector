@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="toolTip">
-   <string>Reset views, enable head rendering, adjust threshold and CT color, and hide the brain mask and bolt fiducials.</string>
+   <string/>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -247,6 +247,9 @@
    </item>
    <item>
     <widget class="ctkCollapsibleButton" name="collapsibleButtonAdvanced">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="text">
       <string>Advanced</string>
      </property>
@@ -266,7 +269,7 @@
          <string>Auto-save</string>
         </property>
         <property name="SlicerParameterName" stdset="0">
-         <string>saveBrainMask</string>
+         <string>autoSave</string>
         </property>
        </widget>
       </item>
@@ -337,9 +340,9 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="ctkPathLineEdit" name="pathLineEditBrainMask">
+       <widget class="ctkPathLineEdit" name="pathLineEditSavePath">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="toolTip">
          <string>Directory to automatically save created data (defaults to the CT directory).</string>
@@ -470,6 +473,9 @@
       </item>
       <item row="0" column="1">
        <widget class="QPushButton" name="buttonPlaceElectrodeTIP">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="toolTip">
          <string>Check if you want to place the TIP of the selected electrode.</string>
         </property>

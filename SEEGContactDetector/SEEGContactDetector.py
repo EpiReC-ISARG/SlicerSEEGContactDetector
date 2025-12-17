@@ -620,14 +620,20 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
             if self._parameterNode.boltFiducials is not None:
                 self.lastSelectedBoltFiducials = self._parameterNode.boltFiducials
                 self.ui.buttonPlaceElectrodeTIP.setEnabled(True)
+                
                 self._parameterNode.boltFiducials.GetDisplayNode().SetSelectedColor(0,0,1)
                 self._parameterNode.boltFiducials.GetDisplayNode().SetGlyphTypeFromString("StarBurst2D")
-
+                
                 self.addObserver(self._parameterNode.boltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
                 self.addObserver(self._parameterNode.boltFiducials, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.onControlPointDefined)
             else:
                 self.lastSelectedBoltFiducials = None
                 self.ui.buttonPlaceElectrodeTIP.setEnabled(False)
+
+    def onBoltFiducialsDisplayNodeModified(self, caller, event):
+        self.removeObserver(self._parameterNode.boltFiducials.GetDisplayNode(), vtk.vtkCommand.ModifiedEvent, self.onBoltFiducialsDisplayNodeModified)
+        self._parameterNode.boltFiducials.GetDisplayNode().SetSelectedColor(0,0,1)
+        self._parameterNode.boltFiducials.GetDisplayNode().SetGlyphTypeFromString("StarBurst2D")
 
     def volumeModified(self, caller, event):
         if self._parameterNode.inputCT.GetStorageNode():
@@ -647,6 +653,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
     
         if "fiducials" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['boltFiducials']):
             self._parameterNode.boltFiducials = node
+            self.addObserver(self._parameterNode.boltFiducials.GetDisplayNode(), vtk.vtkCommand.ModifiedEvent, self.onBoltFiducialsDisplayNodeModified)
             self.bolt_node_imported = True
 
         if "mask" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['brainMask']):

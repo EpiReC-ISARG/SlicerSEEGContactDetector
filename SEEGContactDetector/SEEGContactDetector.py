@@ -443,6 +443,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         self.ui.collapsibleButtonBoltFiducialList.collapsed = True
         self.ui.collapsibleButtonDetectedContactList.collapsed = False
         self.ui.shiftFiducialsWidget.setVisible(True)
+        self.ui.buttonHideDetectedContacts.setIcon(self.icon_visible)
 
         # show markupsNode in the list widget
         self.ui.SimpleMarkupsWidgetEstimatedContacts.setCurrentNode(self.detected_list_markup_node)

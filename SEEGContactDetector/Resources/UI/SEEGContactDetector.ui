@@ -748,7 +748,10 @@
       <string>Reset views, enable head rendering, adjust threshold and CT color, and hide the brain mask and bolt fiducials.</string>
      </property>
      <property name="text">
-      <string>View in scene (Show electrodes in T1)</string>
+      <string>View in Scene (Show electrodes in T1)</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
      </property>
     </widget>
    </item>

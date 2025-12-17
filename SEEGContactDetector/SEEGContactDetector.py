@@ -206,6 +206,10 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         self.detected_list_selected_electrode = None
         self.detected_list_markup_node = None
 
+        self.transformNodeInv = None # keep pointer to the CT to T1 transform node (needed in View in Scene)
+        self.inputCT_display_node_normal = None
+        self.inputCT_display_node_view_in_scene = None
+
     def setup(self) -> None:
         """Called when the user opens the module the first time and the widget is initialized."""
         ScriptedLoadableModuleWidget.setup(self)
@@ -272,11 +276,27 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
     def onMarkupsWidgetInputSelectionChanged(self, markupIndex):
         self.bolt_list_selected_index = markupIndex
 
-    def onViewInSceneClicked(self):
+    def onViewInSceneClicked(self, checked):
+        if checked:
+            # if there is no saved normal DisplayNode save current and create View in Scene DisplayNode
+            if not self.inputCT_display_node_normal:
+                self.inputCT_display_node_normal = self._parameterNode.inputCT.GetDisplayNode()
+                dispNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeDisplayNode")
+                self._parameterNode.inputCT.SetAndObserveDisplayNodeID(dispNode.GetID())
+            # if normal DisplayNode exists, just switch to View in Scene DisplayNode
+            else:
+                self._parameterNode.inputCT.SetAndObserveDisplayNodeID(self.inputCT_display_node_view_in_scene.GetID())
+
+        # if View in Scene is disabled, switch back to normal DisplayNode
+        else:
+            self.inputCT_display_node_view_in_scene = self._parameterNode.inputCT.GetDisplayNode()
+            self._parameterNode.inputCT.SetAndObserveDisplayNodeID(self.inputCT_display_node_normal.GetID())
+            return
+
         with slicer.util.RenderBlocker():
             if self._parameterNode.inputCT:
                 # get intensity range of inputCT
-                range = self._parameterNode.inputCT.GetImageData().GetScalarRange()
+                scalar_range = self._parameterNode.inputCT.GetImageData().GetScalarRange()
 
                 # setup view
                 slicer.util.setSliceViewerLayers(background=self._parameterNode.inputT1, foreground=self._parameterNode.inputCT, foregroundOpacity=1)
@@ -292,10 +312,10 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                 
                 # adjust window/level
                 displayNode.AutoWindowLevelOff()
-                displayNode.SetWindowLevelMinMax(self._parameterNode.metalThreshold_HU, range[1])
+                displayNode.SetWindowLevelMinMax(self._parameterNode.metalThreshold_HU, scalar_range[1])
 
                 # apply threshold
-                displayNode.SetThreshold(self._parameterNode.metalThreshold_HU, range[1])
+                displayNode.SetThreshold(self._parameterNode.metalThreshold_HU, scalar_range[1])
                 displayNode.ApplyThresholdOn()
 
             # reset 3D view
@@ -315,6 +335,19 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
             # show estimated contacts as thick cross
             if self.detected_list_markup_node:
                 self.detected_list_markup_node.SetDisplayVisibility(True)
+
+            # transform CT to T1
+            if self.transformNodeInv:
+                if self._parameterNode.inputCT:
+                    self._parameterNode.inputCT.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
+                if self._parameterNode.brainMask:
+                    self._parameterNode.brainMask.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
+                if self._parameterNode.inputT1:
+                    self._parameterNode.inputT1.SetAndObserveTransformNodeID(None)
+                if self._parameterNode.boltFiducials:
+                    self._parameterNode.boltFiducials.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
+                if self.detected_list_markup_node:
+                    self.detected_list_markup_node.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
 
     def onRunClicked(self):
         progressbar = slicer.util.createProgressDialog(windowTitle="Detecting contacts")
@@ -505,7 +538,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
     def onCreateFromT1Clicked(self):
         with slicer.util.WaitCursor():
-            segmentationNodeBET = self.logic.register_and_brain_mask(
+            transformNode, segmentationNodeBET = self.logic.register_and_brain_mask(
                 inputCT=self._parameterNode.inputCT,
                 inputT1=self._parameterNode.inputT1,
                 metalThreshold_HU=self._parameterNode.metalThreshold_HU,
@@ -515,6 +548,15 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
             # update parameter node
             self._parameterNode.brainMask = segmentationNodeBET
+            
+            # clone transformNode
+            if transformNode:
+                shNode = slicer.vtkMRMLSubjectHierarchyNode.GetSubjectHierarchyNode(slicer.mrmlScene)
+                itemIDToClone = shNode.GetItemByDataNode(transformNode)
+                clonedItemID = slicer.modules.subjecthierarchy.logic().CloneSubjectHierarchyItem(shNode, itemIDToClone)
+                self.transformNodeInv = shNode.GetItemDataNode(clonedItemID)
+                self.transformNodeInv.SetName(slicer.mrmlScene.GenerateUniqueName("Transform CT to T1"))
+                self.transformNodeInv.Inverse()
 
     def updateGUIFromParameterNode(self, caller, event):
         # check skull stripping button availability
@@ -785,9 +827,10 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
                 # save segmentation
                 if save and path:
                     slicer.util.saveNode(segmentationNodeBET, os.path.join(path, "CT_brain_mask_autosave.seg.nrrd"))
-                    slicer.util.saveNode(transformNode, os.path.join(path, "transform_T1_to_CT_autosave.h5"))
+                    if not skipRegistration:
+                        slicer.util.saveNode(transformNode, os.path.join(path, "transform_T1_to_CT_autosave.h5"))
 
-                return segmentationNodeBET
+                return [transformNode if not skipRegistration else None, segmentationNodeBET]
     
     def update_fiducials(self,
                         inputCT: vtkMRMLScalarVolumeNode,

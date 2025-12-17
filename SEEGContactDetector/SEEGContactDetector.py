@@ -200,6 +200,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
         self.lastSelectedBoltFiducials = None # store the last selected fiducial node to remove observer after GUI is changed
         self.bolt_node_imported = False # flag to disable ControlPointAddedEvent when loading bolt fiducials from a file
+        self.CT_combo_box_changed = False # flag to update autsave path when CT is changed
 
         self.electrodes: list[Electrode] = []
         self.bolt_list_selected_index = 0
@@ -522,15 +523,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
             displayNode.SetVisibility(False)
 
     def onComboBoxCTChanged(self):
-        # disable rendering for the new CT
-        if self._parameterNode.inputCT is not None:
-            self.onRenderingDisabledClicked()
-            self.ui.radioButtonRenderingDisabled.setChecked(True)
-
-            new_ct = slicer.mrmlScene.GetNodeByID(self.ui.comboBoxCT.currentNodeID)
-            if new_ct and new_ct.GetStorageNode():
-                ct_path = new_ct.GetStorageNode().GetFullNameFromFileName()
-                self.ui.pathLineEditSavePath.currentPath = os.path.dirname(ct_path)
+        self.CT_combo_box_changed = True
 
     def onShowCTClicked(self):
         slicer.util.setSliceViewerLayers(background = self._parameterNode.inputCT)
@@ -559,6 +552,17 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                 self.transformNodeInv.Inverse()
 
     def updateGUIFromParameterNode(self, caller, event):
+        # update autosave path when CT is changed
+        if self.CT_combo_box_changed:
+            self.onRenderingDisabledClicked()
+            self.ui.radioButtonRenderingDisabled.setChecked(True)
+
+            new_ct = slicer.mrmlScene.GetNodeByID(self.ui.comboBoxCT.currentNodeID)
+            if new_ct and new_ct.GetStorageNode():
+                ct_path = new_ct.GetStorageNode().GetFullNameFromFileName()
+                self.ui.pathLineEditSavePath.currentPath = os.path.dirname(ct_path)
+            self.CT_combo_box_changed = False
+
         # check skull stripping button availability
         missing = []
         if self._parameterNode.inputCT is None:
@@ -579,6 +583,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
             self.ui.buttonShowCT.setEnabled(False)
             self.ui.buttonShowCT.setToolTip("Missing CT image")
+            self.ui.pathLineEditSavePath.currentPath = ""
         else:
             self.ui.collapsibleButtonRendering.setEnabled(True)
             self.ui.collapsibleButtonRendering.setToolTip("View the CT in 3D. 'Head' renders all tissue above the metal threshold; 'Metal' renders only regions above the metal threshold.")
@@ -628,6 +633,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         if self._parameterNode.inputCT.GetStorageNode():
             ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
             self.ui.pathLineEditSavePath.currentPath = os.path.dirname(ct_path)
+            self.removeObserver(self._parameterNode.inputCT, vtk.vtkCommand.ModifiedEvent, self.volumeModified)
 
     @vtk.calldata_type(vtk.VTK_OBJECT)
     def onNodeAdded(self, caller, event,  node):

@@ -197,6 +197,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
         self.icon_invisible = qt.QIcon(':/Icons/Medium/SlicerInvisible.png')
         self.icon_visible = qt.QIcon(':/Icons/Medium/SlicerVisible.png')
+        self.icon_markups_delete = qt.QIcon(':/Icons/MarkupsDelete.png')
 
         self.lastSelectedBoltFiducials = None # store the last selected fiducial node to remove observer after GUI is changed
         self.bolt_node_imported = False # flag to disable ControlPointAddedEvent when loading bolt fiducials from a file
@@ -254,6 +255,9 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
         self.ui.buttonPlaceElectrodeTIP.connect("clicked(bool)", lambda: slicer.modules.markups.logic().StartPlaceMode(0))
 
+        self.ui.buttonDeleteDetectedContacts.setIcon(self.icon_markups_delete)
+        self.ui.buttonDeleteDetectedContacts.connect("clicked(bool)", self.onDeleteDetectedContactsClicked)
+
         self.ui.buttonHideDetectedContacts.setIcon(self.icon_visible)
         self.ui.buttonHideDetectedContacts.connect("clicked(bool)", self.onHideDetectedContactsClicked)
 
@@ -268,6 +272,10 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
+
+    def onDeleteDetectedContactsClicked(self):
+        if self.detected_list_markup_node:
+            slicer.mrmlScene.RemoveNode(self.detected_list_markup_node)
 
     def onHideDetectedContactsClicked(self):
         state = self.detected_list_markup_node.GetDisplayVisibility()

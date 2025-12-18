@@ -544,9 +544,19 @@
             </spacer>
            </item>
            <item>
+            <widget class="QPushButton" name="buttonDeleteDetectedContacts">
+             <property name="toolTip">
+              <string>Delete detected contact list.</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="buttonHideDetectedContacts">
              <property name="toolTip">
-              <string>Hide/show detected contact list</string>
+              <string>Hide/show detected contact list.</string>
              </property>
             </widget>
            </item>
@@ -554,10 +564,19 @@
          </item>
          <item>
           <layout class="QGridLayout" name="gridLayout_4">
-           <item row="4" column="4">
-            <widget class="QSpinBox" name="spinBoxShiftElectrodeMicrostep">
+           <item row="4" column="0">
+            <widget class="QLabel" name="labelShiftElectrodeMicrostep">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="toolTip">
               <string>Adjust the positions of contacts for the currently selected electrode.</string>
+             </property>
+             <property name="text">
+              <string>TextLabel</string>
              </property>
             </widget>
            </item>
@@ -574,19 +593,10 @@
              </property>
             </widget>
            </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="labelShiftElectrodeMicrostep">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
+           <item row="4" column="4">
+            <widget class="QSpinBox" name="spinBoxShiftElectrodeMicrostep">
              <property name="toolTip">
               <string>Adjust the positions of contacts for the currently selected electrode.</string>
-             </property>
-             <property name="text">
-              <string>TextLabel</string>
              </property>
             </widget>
            </item>

@@ -173,8 +173,8 @@ class Electrode():
     @staticmethod
     def split_label(electrode_name):
         parts = electrode_name.split('-')
-        if len(parts) != 2 or parts[-1].isdigit() == False:
-            return False
+        if parts[-1].isdigit() == False:
+            return False, False
         return '-'.join(parts[:-1]), int(parts[-1])
 
 #
@@ -1391,10 +1391,10 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
         for i in range(boltFiducials.GetNumberOfControlPoints()):
             bolt_tip_ras = [0, 0, 0]
             boltFiducials.GetNthControlPointPosition(i, bolt_tip_ras)
-            label = boltFiducials.GetNthControlPointLabel(i)
 
-            if Electrode.split_label(label):
-                prefix, n_contacts = Electrode.split_label(label)
+            label = boltFiducials.GetNthControlPointLabel(i)
+            prefix, n_contacts = Electrode.split_label(label)
+            if n_contacts and n_contacts > 1:
                 electrodes.append(Electrode(bolt_tip_ras, label, contactLength_mm, contactGap_mm))
                 electrode_prefixes.append(prefix)
             else:
@@ -1404,17 +1404,24 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
         for i in range(boltFiducials.GetNumberOfControlPoints()):
             electrode_tip_ras = [0, 0, 0]
             boltFiducials.GetNthControlPointPosition(i, electrode_tip_ras)
-            label = boltFiducials.GetNthControlPointLabel(i)
 
-            if Electrode.split_label(label):
+            label = boltFiducials.GetNthControlPointLabel(i)
+            prefix, n_contacts = Electrode.split_label(label)
+            if n_contacts and n_contacts > 1:
                 continue
-            elif label[-1] == "1" and label[:-1] in electrode_prefixes:
-                electrode_index = electrode_prefixes.index(label[:-1])
+            elif n_contacts == 1 and prefix in electrode_prefixes:
+                electrode_index = electrode_prefixes.index(prefix)
                 electrodes[electrode_index].tip_ras = electrode_tip_ras
                 electrodes[electrode_index].manual_tip = True
             else:
-                slicer.util.errorDisplay(f"Electrode label {label} is not in the correct format. It should be in the format '<label>-<number>', where <label> is the electrode prefix and <number> is the number of contacts.")
-        
+                slicer.util.errorDisplay(f"Electrode label {label} is not in the correct format. It should be in the format '<label>-<number>', where <label> is the electrode prefix and <number> is the number of contacts (>=2).")
+                raise ValueError
+
+        # check duplicity of electrode prefixes
+        if len(electrode_prefixes) != len(set(electrode_prefixes)):
+            slicer.util.errorDisplay("Electrodes with the same prefix are not allowed.")
+            raise ValueError
+
         return electrodes
 
 

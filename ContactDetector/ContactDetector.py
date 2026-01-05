@@ -118,6 +118,7 @@ class ContactDetectorParameterNode:
     brainMask: vtkMRMLSegmentationNode
     boltFiducials: vtkMRMLMarkupsFiducialNode
 
+    skipRegistration: bool = False
     saveBrainMask: bool = True
     metalThreshold_HU: Annotated[float, WithinRange(0, 9999999)] = 3000
     contactLength_mm: Annotated[float, WithinRange(0.1, 100)] = 2
@@ -184,8 +185,6 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.electrodes: list[Electrode] = []
         self.selected_electrode = None
         self.result_markup_node = None
-
-        self.wait_for_storage_node = False
 
     def setup(self) -> None:
         """Called when the user opens the module the first time and the widget is initialized."""
@@ -517,11 +516,8 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             new_ct = slicer.mrmlScene.GetNodeByID(self.ui.comboBoxCT.currentNodeID)
             if new_ct and new_ct.GetStorageNode():
-                if self._parameterNode.saveBrainMask:
-                    ct_path = new_ct.GetStorageNode().GetFullNameFromFileName()
-                    self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
-            else:
-                self.wait_for_storage_node = True
+                ct_path = new_ct.GetStorageNode().GetFullNameFromFileName()
+                self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
 
     def onShowCTClicked(self):
         slicer.util.setSliceViewerLayers(background = self._parameterNode.inputCT)
@@ -542,41 +538,43 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             fixedVolumeNode = self._parameterNode.inputCT
             movingVolumeNode = self._parameterNode.inputT1
 
-            # create ROI segmentation for registration
-            segmentationNodeROI = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
-            segmentationNodeROI.SetReferenceImageGeometryParameterFromVolumeNode(self._parameterNode.inputCT)
-            segmentationNodeROI.CreateDefaultDisplayNodes()
-            segmentId = segmentationNodeROI.GetSegmentation().AddEmptySegment()
-            segmentationNodeROI.GetSegmentation().GetSegment(segmentId)
-            segmentation_array = (slicer.util.arrayFromVolume(fixedVolumeNode) < self._parameterNode.metalThreshold_HU).astype(np.uint8)
-            slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_array, segmentationNodeROI, segmentId)
+            if not self._parameterNode.skipRegistration:
+                # create ROI segmentation for registration
+                segmentationNodeROI = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
+                segmentationNodeROI.SetReferenceImageGeometryParameterFromVolumeNode(self._parameterNode.inputCT)
+                segmentationNodeROI.CreateDefaultDisplayNodes()
+                segmentId = segmentationNodeROI.GetSegmentation().AddEmptySegment()
+                segmentationNodeROI.GetSegmentation().GetSegment(segmentId)
+                segmentation_array = (slicer.util.arrayFromVolume(fixedVolumeNode) < self._parameterNode.metalThreshold_HU).astype(np.uint8)
+                slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_array, segmentationNodeROI, segmentId)
 
-            # create new nodes for output
+                transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode", slicer.mrmlScene.GenerateUniqueName("Transform T1 to CT"))
+
+                # Run registration
+                parameters = {}
+                parameters["fixedVolume"] = fixedVolumeNode.GetID()
+                parameters["movingVolume"] = movingVolumeNode.GetID()
+                parameters["linearTransform"] = transformNode.GetID()
+                parameters["useRigid"] = True
+                parameters["samplingPercentage"] = 0.01
+                parameters["initializeTransformMode"] = "useGeometryAlign"
+                parameters["maskProcessingMode"] = "ROI"
+                parameters["fixedBinaryVolume"] = segmentationNodeROI.GetID()
+                cliBrainsFitRigidNode = slicer.cli.run(slicer.modules.brainsfit, None, parameters, wait_for_completion=True)
+
+                # remove ROI segmentation
+                slicer.mrmlScene.RemoveNode(segmentationNodeROI)
+
             segmentationNodeBET = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", slicer.mrmlScene.GenerateUniqueName("CT Brain mask"))
-            transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode", slicer.mrmlScene.GenerateUniqueName("Transform T1 to CT"))
-
-            # Run registration
-            parameters = {}
-            parameters["fixedVolume"] = fixedVolumeNode.GetID()
-            parameters["movingVolume"] = movingVolumeNode.GetID()
-            parameters["linearTransform"] = transformNode.GetID()
-            parameters["useRigid"] = True
-            parameters["samplingPercentage"] = 0.01
-            parameters["initializeTransformMode"] = "useGeometryAlign"
-            parameters["maskProcessingMode"] = "ROI"
-            parameters["fixedBinaryVolume"] = segmentationNodeROI.GetID()
-            cliBrainsFitRigidNode = slicer.cli.run(slicer.modules.brainsfit, None, parameters, wait_for_completion=True)
-
-            # remove ROI segmentation
-            slicer.mrmlScene.RemoveNode(segmentationNodeROI)
 
             # run HD-BET
             import HDBrainExtractionTool as hd_bet
             hd_bet_logic = hd_bet.HDBrainExtractionToolLogic()
             hd_bet_logic.setupPythonRequirements()
             hd_bet_logic.process(self._parameterNode.inputT1, None, segmentationNodeBET, "cpu")
-            segmentationNodeBET.SetAndObserveTransformNodeID(transformNode.GetID())
-            segmentationNodeBET.HardenTransform()
+            if not self._parameterNode.skipRegistration:
+                segmentationNodeBET.SetAndObserveTransformNodeID(transformNode.GetID())
+                segmentationNodeBET.HardenTransform()
 
             # update parameter node
             self._parameterNode.brainMask = segmentationNodeBET
@@ -645,13 +643,11 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if self._parameterNode.boltFiducials is not None:
             self.lastSelectedBoltFiducials = self._parameterNode.boltFiducials
             self.addObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
-    
+
     def volumeModified(self, caller, event):
-        if self.wait_for_storage_node:
-            if self._parameterNode.saveBrainMask and self._parameterNode.inputCT.GetStorageNode():
-                self.wait_for_storage_node = False
-                ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
-                self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
+        if self._parameterNode.inputCT.GetStorageNode() and self._parameterNode.saveBrainMask:
+            ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
+            self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
 
     @vtk.calldata_type(vtk.VTK_OBJECT)
     def onNodeAdded(self, caller, event,  node):
@@ -659,7 +655,7 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if "ct" in node.GetName().lower() and isinstance(node, ContactDetectorParameterNode.__annotations__['inputCT']):
             self._parameterNode.inputCT = node
             self._parameterNode.inputCT.AddObserver(vtk.vtkCommand.ModifiedEvent, self.volumeModified)
-
+            
         if "t1" in node.GetName().lower() and isinstance(node, ContactDetectorParameterNode.__annotations__['inputT1']):
             self._parameterNode.inputT1 = node
     
@@ -711,6 +707,9 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             for node in volume_nodes:
                 if "ct" in node.GetName().lower():
                     self._parameterNode.inputCT = node
+                    if node.GetStorageNode():
+                        ct_path = node.GetStorageNode().GetFullNameFromFileName()
+                        self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
                 if "t1" in node.GetName().lower():
                     self._parameterNode.inputT1 = node
             
@@ -1327,7 +1326,6 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
                 electrodes[electrode_index].manual_tip = True
             else:
                 slicer.util.errorDisplay(f"Electrode label {label} is not in the correct format. It should be in the format '<label>-<number>', where <label> is the electrode prefix and <number> is the number of contacts.")
-                raise ValueError
         
         return electrodes
 

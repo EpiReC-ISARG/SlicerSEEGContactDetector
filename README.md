@@ -14,7 +14,8 @@
 - [ ] save curve in parameterNode
 - [ ] electrode dimensions in Electrode class
 - [ ] electrodes output in T1 space
-- [ ] manual input -> disable metal check
+- [x] manual input -> disable metal check
+- [x] skip registration button
 
 # Visualization
 - [x] debug checkbox to enable visualization
@@ -33,14 +34,14 @@
 - [x] start without extending the curve
 - [x] ras tip fiducial naming C1-no to C1
 - [x] save CT brain mask path is missing when T1 and CT are loaded outside of the module
-- [ ] CT path bug
+- [x] CT path bug
 
 # Finalization
 - [x] add parameters into the parameter node and check scene saving
 - [x] remove step-by-step, add event on run all click
 - [ ] create tooltip help
 - [ ] add module description, help and acknowledgement
-- [ ] icon
+- [x] icon
 - [x] mrml scene (ocean, etc)
 
 # Testing

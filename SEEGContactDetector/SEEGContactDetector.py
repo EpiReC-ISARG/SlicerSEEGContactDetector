@@ -3,6 +3,7 @@ import os
 from typing import Annotated, Optional
 import re
 
+import qt
 import vtk
 
 import slicer
@@ -20,36 +21,40 @@ from slicer import vtkMRMLScalarVolumeNode, vtkMRMLSegmentationNode, vtkMRMLMark
 import numpy as np
 
 #
-# ContactDetector
+# SEEGContactDetector
 #
 
 
-class ContactDetector(ScriptedLoadableModule):
+class SEEGContactDetector(ScriptedLoadableModule):
     """Uses ScriptedLoadableModule base class, available at:
     https://github.com/Slicer/Slicer/blob/main/Base/Python/slicer/ScriptedLoadableModule.py
     """
 
     def __init__(self, parent):
         ScriptedLoadableModule.__init__(self, parent)
-        self.parent.title = _("Contact Detector")  # TODO: make this more human readable by adding spaces
-        # TODO: set categories (folders where the module shows up in the module selector)
-        self.parent.categories = [translate("qSlicerAbstractCoreModule", "SEEG")]
-        self.parent.dependencies = []  # TODO: add here list of module names that this module requires
-        self.parent.contributors = ["Jakub Smid (CTU in Prague)"]  # TODO: replace with "Firstname Lastname (Organization)"
+        self.parent.title = _("SEEG Contact Detector")
+        self.parent.categories = [translate("qSlicerAbstractCoreModule", "IGT")] # set categories (folders where the module shows up in the module selector)
+        self.parent.dependencies = ["HDBrainExtractionTool"]  # add here list of module names that this module requires
+        self.parent.contributors = ["Jakub Smid (CTU in Prague, Charles University)", "Radek Janca (CTU in Prague)"]
         # TODO: update with short description of the module and a link to online module documentation
         # _() function marks text as translatable to other languages
         self.parent.helpText = _("""
 This is an example of scripted loadable module bundled in an extension.
-See more information in <a href="https://github.com/organization/projectname#ContactDetector">module documentation</a>.
+See more information in <a href="https://github.com/organization/projectname#SEEGContactDetector">module documentation</a>.
 """)
-        # TODO: replace with organization, grant and thanks
+        # organization, grant and thanks
         self.parent.acknowledgementText = _("""
-This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc., Andras Lasso, PerkLab,
-and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
+The implementation builds upon the design published in [1], employing standard 3D Slicer functionalities and relying on the external 3D Slicer extenstion <i>HDBrainExtraction</i> which is based on HD-BET [2].
+<h4>References</h4>
+<ul style="list-style-type: none">
+<li id="ref1">[1] Janca, Radek, et al. "Automated identification of stereoelectroencephalography contacts and measurement of factors influencing accuracy of frame stereotaxy." <i>IEEE Journal of Biomedical and Health Informatics 27.7 (2023): 3326-3336.</li>
+<li id="ref2">[2] Isensee F, Schell M, Tursunova I, Brugnara G, Bonekamp D, Neuberger U, Wick A, Schlemmer HP, Heiland S, Wick W, Bendszus M, Maier-Hein KH, Kickingereder P. Automated brain extraction of multi-sequence MRI using artificial neural networks. Hum Brain Mapp. 2019; 1–13. <a href="https://doi.org/10.1002/hbm.24750">https://doi.org/10.1002/hbm.24750</li>
+</ul>
+<p>This work was supported by the Ministry of Health of the Czech Republic (grant projects AZV NU23-08-00528, NW25-04-00427, NW25-08-00371); project number LX22NPO5107 (MEYS), financed by EU—Next Generation EU; ERDF-Project Brain Dynamics (No. CZ.02.01.01/00/22_008/0004643); and the Grant Agency of the Czech Technical University in Prague (SGS23/170/OHK3/3T/13).</p>
 """)
 
         # Additional initialization step after application startup is complete
-        # slicer.app.connect("startupCompleted()", registerSampleData)
+        slicer.app.connect("startupCompleted()", registerSampleData)
 
 
 #
@@ -69,46 +74,54 @@ def registerSampleData():
     # To ensure that the source code repository remains small (can be downloaded and installed quickly)
     # it is recommended to store data sets that are larger than a few MB in a Github release.
 
-    # ContactDetector1
+    # CT
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
         # Category and sample name displayed in Sample Data module
-        category="ContactDetector",
-        sampleName="ContactDetector1",
+        category="SEEG Contact Detector",
+        sampleName="CT with SEEG electrodes",
         # Thumbnail should have size of approximately 260x280 pixels and stored in Resources/Icons folder.
         # It can be created by Screen Capture module, "Capture all views" option enabled, "Number of images" set to "Single".
-        thumbnailFileName=os.path.join(iconsPath, "ContactDetector1.png"),
+        thumbnailFileName=os.path.join(iconsPath, "SEEGContactDetector1.png"),
         # Download URL and target file name
-        uris="https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/998cb522173839c78657f4bc0ea907cea09fd04e44601f17c82ea27927937b95",
-        fileNames="ContactDetector1.nrrd",
+        uris="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases/download/v0.2.0/SampleData_CT_defaced.nii.gz",
+        fileNames="SEEGContactDetector_CT.nii.gz",
         # Checksum to ensure file integrity. Can be computed by this command:
         #  import hashlib; print(hashlib.sha256(open(filename, "rb").read()).hexdigest())
-        checksums="SHA256:998cb522173839c78657f4bc0ea907cea09fd04e44601f17c82ea27927937b95",
+        checksums="SHA256:232c9756f9232c5f9446effce9290f592086a650dc3bb22018d49ad9f24b0d1e",
         # This node name will be used when the data set is loaded
-        nodeNames="ContactDetector1",
+        nodeNames="CT with SEEG electrodes",
     )
 
-    # ContactDetector2
+    # T1
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
-        # Category and sample name displayed in Sample Data module
-        category="ContactDetector",
-        sampleName="ContactDetector2",
-        thumbnailFileName=os.path.join(iconsPath, "ContactDetector2.png"),
-        # Download URL and target file name
-        uris="https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/1a64f3f422eb3d1c9b093d1a18da354b13bcf307907c66317e2463ee530b7a97",
-        fileNames="ContactDetector2.nrrd",
-        checksums="SHA256:1a64f3f422eb3d1c9b093d1a18da354b13bcf307907c66317e2463ee530b7a97",
-        # This node name will be used when the data set is loaded
-        nodeNames="ContactDetector2",
+        category="SEEG Contact Detector",
+        sampleName="Preoperative T1",
+        thumbnailFileName=os.path.join(iconsPath, "SEEGContactDetector2.png"),
+        uris="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases/download/v0.2.0/SampleData_T1_defaced.nii.gz",
+        fileNames="SEEGContactDetector_T1.nii.gz",
+        checksums="SHA256:355bd49dcb51d1da07dd4f170dc892115f61f1cff840309cd93b2f879e5be7ab",
+        nodeNames="Preoperative T1",
+    )
+
+    # bolt fiducials
+    SampleData.SampleDataLogic.registerCustomSampleDataSource(
+        category="SEEG Contact Detector",
+        sampleName="Bolt fiducials",
+        thumbnailFileName=os.path.join(iconsPath, "SEEGContactDetector2.png"),
+        uris="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases/download/v0.2.0/SampleData_BoltFiducials.fcsv",
+        fileNames="SEEGContactDetector_BoltFiducials.fcsv",
+        checksums="SHA256:ac4b819f6c5fc10f831133db4e05a21b19a43ff8170ae48b7c00d9dec5821633",
+        nodeNames="Bolt fiducials",
     )
 
 
 #
-# ContactDetectorParameterNode
+# SEEGContactDetectorParameterNode
 #
 
 
 @parameterNodeWrapper
-class ContactDetectorParameterNode:
+class SEEGContactDetectorParameterNode:
     """
     The parameters needed by module.
     """
@@ -118,13 +131,15 @@ class ContactDetectorParameterNode:
     brainMask: vtkMRMLSegmentationNode
     boltFiducials: vtkMRMLMarkupsFiducialNode
 
+    placeElectrodeTip: bool = False
+
     skipRegistration: bool = False
-    saveBrainMask: bool = True
+    autoSave: bool = True
     metalThreshold_HU: Annotated[float, WithinRange(0, 9999999)] = 3000
     contactLength_mm: Annotated[float, WithinRange(0.1, 100)] = 2
     contactGap_mm: Annotated[float, WithinRange(0.1, 100)] = 1.5
     contactDiameter_mm: Annotated[float, WithinRange(0.1, 100)] = 0.8
-    boltSphereRadius_mm: Annotated[float, WithinRange(0.1, 100)] = 5
+    boltRadius_mm: Annotated[float, WithinRange(0.1, 100)] = 5
     blobSize_sigma: Annotated[float, WithinRange(0.1, 100)] = 3
 
     # developerMode
@@ -158,16 +173,16 @@ class Electrode():
     @staticmethod
     def split_label(electrode_name):
         parts = electrode_name.split('-')
-        if len(parts) != 2 or parts[-1].isdigit() == False:
-            return False
+        if parts[-1].isdigit() == False:
+            return False, False
         return '-'.join(parts[:-1]), int(parts[-1])
 
 #
-# ContactDetectorWidget
+# SEEGContactDetectorWidget
 #
 
 
-class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
+class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     """Uses ScriptedLoadableModuleWidget base class, available at:
     https://github.com/Slicer/Slicer/blob/main/Base/Python/slicer/ScriptedLoadableModule.py
     """
@@ -175,16 +190,27 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def __init__(self, parent=None) -> None:
         """Called when the user opens the module the first time and the widget is initialized."""
         ScriptedLoadableModuleWidget.__init__(self, parent)
-        # VTKObservationMixin.__init__(self)  # needed for parameter node observation
+        VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
         self._parameterNode = None
         self._parameterNodeGuiTag = None
 
+        self.icon_invisible = qt.QIcon(':/Icons/Medium/SlicerInvisible.png')
+        self.icon_visible = qt.QIcon(':/Icons/Medium/SlicerVisible.png')
+        self.icon_markups_delete = qt.QIcon(':/Icons/MarkupsDelete.png')
+
         self.lastSelectedBoltFiducials = None # store the last selected fiducial node to remove observer after GUI is changed
+        self.bolt_node_imported = False # flag to disable ControlPointAddedEvent when loading bolt fiducials from a file
+        self.CT_combo_box_changed = False # flag to update autsave path when CT is changed
 
         self.electrodes: list[Electrode] = []
-        self.selected_electrode = None
-        self.result_markup_node = None
+        self.bolt_list_selected_index = 0
+        self.detected_list_selected_electrode = None
+        self.detected_list_markup_node = None
+
+        self.transformNodeInv = None # keep pointer to the CT to T1 transform node (needed in View in Scene)
+        self.inputCT_display_node_normal = None
+        self.inputCT_display_node_view_in_scene = None
 
     def setup(self) -> None:
         """Called when the user opens the module the first time and the widget is initialized."""
@@ -192,7 +218,7 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Load widget from .ui file (created by Qt Designer).
         # Additional widgets can be instantiated manually and added to self.layout.
-        uiWidget = slicer.util.loadUI(self.resourcePath("UI/ContactDetector.ui"))
+        uiWidget = slicer.util.loadUI(self.resourcePath("UI/SEEGContactDetector.ui"))
         self.layout.addWidget(uiWidget)
         self.ui = slicer.util.childWidgetVariables(uiWidget)
 
@@ -208,11 +234,12 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Create logic class. Logic implements all computations that should be possible to run
         # in batch mode, without a graphical user interface.
-        self.logic = ContactDetectorLogic()
+        self.logic = SEEGContactDetectorLogic()
 
         # Connections
 
         self.ui.comboBoxCT.connect('currentNodeChanged(vtkMRMLNode*)', self.onComboBoxCTChanged)
+        self.ui.SimpleMarkupsWidgetInput.connect('currentMarkupsControlPointSelectionChanged(int)', self.onMarkupsWidgetInputSelectionChanged)
         self.ui.SimpleMarkupsWidgetEstimatedContacts.connect('currentMarkupsControlPointSelectionChanged(int)', self.onMarkupsWidgetEstimatedContactsSelectionChanged)
         self.ui.SimpleMarkupsWidgetEstimatedContacts.connect('markupsNodeChanged()', self.onMarkupsWidgetEstimatedContactsMarkupsNodeChanged)
         self.ui.spinBoxShiftElectrodeByContact.connect('valueChanged(int)', self.onSpinBoxShiftElectrodeByContactChanged)
@@ -220,14 +247,21 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Buttons
         self.ui.buttonShowCT.connect("clicked(bool)", self.onShowCTClicked)
-        self.ui.buttonCreateBrainMask.connect("clicked(bool)", self.onCreateBrainMaskClicked)
+        self.ui.buttonCreateFromT1.connect("clicked(bool)", self.onCreateFromT1Clicked)
 
         self.ui.radioButtonRenderingMetal.connect("clicked(bool)", self.onRenderingMetalClicked)
         self.ui.radioButtonRenderingHead.connect("clicked(bool)", self.onRenderingHeadClicked)
         self.ui.radioButtonRenderingDisabled.connect("clicked(bool)", self.onRenderingDisabledClicked)
 
-        self.ui.buttonRun.connect("clicked(bool)", self.onRunClicked)
+        self.ui.buttonPlaceElectrodeTIP.connect("clicked(bool)", lambda: slicer.modules.markups.logic().StartPlaceMode(0))
 
+        self.ui.buttonDeleteDetectedContacts.setIcon(self.icon_markups_delete)
+        self.ui.buttonDeleteDetectedContacts.connect("clicked(bool)", self.onDeleteDetectedContactsClicked)
+
+        self.ui.buttonHideDetectedContacts.setIcon(self.icon_visible)
+        self.ui.buttonHideDetectedContacts.connect("clicked(bool)", self.onHideDetectedContactsClicked)
+
+        self.ui.buttonRun.connect("clicked(bool)", self.onRunClicked)
         self.ui.buttonViewInScene.connect("clicked(bool)", self.onViewInSceneClicked)
 
         # developerMode
@@ -240,6 +274,18 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
+
+    def onDeleteDetectedContactsClicked(self):
+        if self.detected_list_markup_node:
+            slicer.mrmlScene.RemoveNode(self.detected_list_markup_node)
+
+    def onHideDetectedContactsClicked(self):
+        state = self.detected_list_markup_node.GetDisplayVisibility()
+        self.detected_list_markup_node.SetDisplayVisibility(not state)
+        self.ui.buttonHideDetectedContacts.setIcon(self.icon_invisible if state else self.icon_visible)
+
+    def onMarkupsWidgetInputSelectionChanged(self, markupIndex):
+        self.bolt_list_selected_index = markupIndex
 
     def onBulkBrainMaskClicked(self):
         # generate brain mask for all CTs
@@ -311,11 +357,27 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 slicer.mrmlScene.RemoveNode(fiducials)
         print(f"Contacts estimation is done")
 
-    def onViewInSceneClicked(self):
+    def onViewInSceneClicked(self, checked):
+        if checked:
+            # if there is no saved normal DisplayNode save current and create View in Scene DisplayNode
+            if not self.inputCT_display_node_normal:
+                self.inputCT_display_node_normal = self._parameterNode.inputCT.GetDisplayNode()
+                dispNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeDisplayNode")
+                self._parameterNode.inputCT.SetAndObserveDisplayNodeID(dispNode.GetID())
+            # if normal DisplayNode exists, just switch to View in Scene DisplayNode
+            else:
+                self._parameterNode.inputCT.SetAndObserveDisplayNodeID(self.inputCT_display_node_view_in_scene.GetID())
+
+        # if View in Scene is disabled, switch back to normal DisplayNode
+        else:
+            self.inputCT_display_node_view_in_scene = self._parameterNode.inputCT.GetDisplayNode()
+            self._parameterNode.inputCT.SetAndObserveDisplayNodeID(self.inputCT_display_node_normal.GetID())
+            return
+
         with slicer.util.RenderBlocker():
             if self._parameterNode.inputCT:
                 # get intensity range of inputCT
-                range = self._parameterNode.inputCT.GetImageData().GetScalarRange()
+                scalar_range = self._parameterNode.inputCT.GetImageData().GetScalarRange()
 
                 # setup view
                 slicer.util.setSliceViewerLayers(background=self._parameterNode.inputT1, foreground=self._parameterNode.inputCT, foregroundOpacity=1)
@@ -331,10 +393,10 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 
                 # adjust window/level
                 displayNode.AutoWindowLevelOff()
-                displayNode.SetWindowLevelMinMax(self._parameterNode.metalThreshold_HU, range[1])
+                displayNode.SetWindowLevelMinMax(self._parameterNode.metalThreshold_HU, scalar_range[1])
 
                 # apply threshold
-                displayNode.SetThreshold(self._parameterNode.metalThreshold_HU, range[1])
+                displayNode.SetThreshold(self._parameterNode.metalThreshold_HU, scalar_range[1])
                 displayNode.ApplyThresholdOn()
 
             # reset 3D view
@@ -352,9 +414,21 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self._parameterNode.boltFiducials.SetDisplayVisibility(False)
 
             # show estimated contacts as thick cross
-            if self.result_markup_node:
-                self.result_markup_node.SetDisplayVisibility(True)
-                self.result_markup_node.GetDisplayNode().SetGlyphTypeFromString("ThickCross2D")
+            if self.detected_list_markup_node:
+                self.detected_list_markup_node.SetDisplayVisibility(True)
+
+            # transform CT to T1
+            if self.transformNodeInv:
+                if self._parameterNode.inputCT:
+                    self._parameterNode.inputCT.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
+                if self._parameterNode.brainMask:
+                    self._parameterNode.brainMask.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
+                if self._parameterNode.inputT1:
+                    self._parameterNode.inputT1.SetAndObserveTransformNodeID(None)
+                if self._parameterNode.boltFiducials:
+                    self._parameterNode.boltFiducials.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
+                if self.detected_list_markup_node:
+                    self.detected_list_markup_node.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
 
     def onRunClicked(self):
         progressbar = slicer.util.createProgressDialog(windowTitle="Detecting contacts")
@@ -379,29 +453,33 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         progressbar.value = 100
 
     def onSpinBoxShiftElectrodeMicrostepChanged(self, spin_box_value):
-        self.selected_electrode.curve_points_offset = spin_box_value
+        self.detected_list_selected_electrode.curve_points_offset = spin_box_value
         self.logic.update_fiducials(self._parameterNode.inputCT,
-                                    self.result_markup_node,
-                                    self.selected_electrode,
+                                    self.detected_list_markup_node,
+                                    self.detected_list_selected_electrode,
                                     self._parameterNode.contactLength_mm,
-                                    self._parameterNode.contactGap_mm)
+                                    self._parameterNode.contactGap_mm,
+                                    self._parameterNode.autoSave,
+                                    self.ui.pathLineEditSavePath.currentPath)
         
     def onSpinBoxShiftElectrodeByContactChanged(self, spin_box_value):
-        self.selected_electrode.shift_fiducials_value = spin_box_value
+        self.detected_list_selected_electrode.shift_fiducials_value = spin_box_value
         self.logic.update_fiducials(self._parameterNode.inputCT,
-                                    self.result_markup_node,
-                                    self.selected_electrode,
+                                    self.detected_list_markup_node,
+                                    self.detected_list_selected_electrode,
                                     self._parameterNode.contactLength_mm,
-                                    self._parameterNode.contactGap_mm)
+                                    self._parameterNode.contactGap_mm,
+                                    self._parameterNode.autoSave,
+                                    self.ui.pathLineEditSavePath.currentPath)
 
     def onMarkupsWidgetEstimatedContactsSelectionChanged(self, markupIndex):
-        selected_label = self.result_markup_node.GetNthControlPointLabel(markupIndex)
+        selected_label = self.detected_list_markup_node.GetNthControlPointLabel(markupIndex)
         selected_label = re.sub(r"\d+$", "", selected_label) # remove trailing number
 
         # find electrode by name
         for electrode in self.electrodes:
             if electrode.label_prefix == selected_label:
-                self.selected_electrode = electrode
+                self.detected_list_selected_electrode = electrode
                 self.ui.labelShiftElectrodeByContact.setText(f"Shift {electrode.label_prefix} fiducials by contact:")
                 self.ui.labelShiftElectrodeMicrostep.setText(f"Shift {electrode.label_prefix} fiducials (microsteps, approx. 0.1 mm):")
 
@@ -417,35 +495,52 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     def onMarkupsWidgetEstimatedContactsMarkupsNodeChanged(self):
         # check for invalid markup node in the list (result markup node has been probably deleted)
-        if self.ui.SimpleMarkupsWidgetEstimatedContacts.currentNode() is not self.result_markup_node:
+        if self.ui.SimpleMarkupsWidgetEstimatedContacts.currentNode() is not self.detected_list_markup_node:
             self.ui.shiftFiducialsWidget.setVisible(False)
             self.ui.SimpleMarkupsWidgetEstimatedContacts.setCurrentNode(None)
-            self.result_markup_node = None
+            self.detected_list_markup_node = None
 
     def onCurveFittingClicked(self):
         with slicer.util.WaitCursor():
-            self.result_markup_node = self.logic.curve_fitting(self._parameterNode.inputCT,
+            if self.detected_list_markup_node is not None:
+                self.detected_list_markup_node.SetDisplayVisibility(False)
+                self.removeObserver(self.detected_list_markup_node, vtk.vtkCommand.ModifiedEvent, self.onDetectedListMarkupNodeModified)
+
+            self.detected_list_markup_node = self.logic.curve_fitting(self._parameterNode.inputCT,
                                                                self.electrodes,
-                                                               self._parameterNode.boltSphereRadius_mm,
+                                                               self._parameterNode.boltRadius_mm,
                                                                self._parameterNode.blobSize_sigma,
                                                                self._parameterNode.contactDiameter_mm,
                                                                self._parameterNode.contactLength_mm,
                                                                self._parameterNode.contactGap_mm,
                                                                self._parameterNode.metalThreshold_HU,
-                                                               self._parameterNode.gaussianBalls)
+                                                               self._parameterNode.gaussianBalls,
+                                                               self._parameterNode.boltFiducials,
+                                                               save=self._parameterNode.autoSave,
+                                                               path=self.ui.pathLineEditSavePath.currentPath)
         
-        # collapse collapsibleButtonInputBoltFiducials and make visible output collapsible button
-        self.ui.collapsibleButtonInputBoltFiducials.collapsed = True
-        self.ui.collapsibleButtonEstimatedContacts.collapsed = False
+        # collapse collapsibleButtonBoltFiducialList and make visible output collapsible button
+        self.ui.collapsibleButtonBoltFiducialList.collapsed = True
+        self.ui.collapsibleButtonDetectedContactList.collapsed = False
         self.ui.shiftFiducialsWidget.setVisible(True)
+        self.ui.buttonHideDetectedContacts.setIcon(self.icon_visible)
 
         # show markupsNode in the list widget
-        self.ui.SimpleMarkupsWidgetEstimatedContacts.setCurrentNode(self.result_markup_node)
+        self.ui.SimpleMarkupsWidgetEstimatedContacts.setCurrentNode(self.detected_list_markup_node)
         
         # highlight the first control point
         self.ui.SimpleMarkupsWidgetEstimatedContacts.setJumpToSliceEnabled(False)
         self.ui.SimpleMarkupsWidgetEstimatedContacts.highlightNthControlPoint(0)
         self.ui.SimpleMarkupsWidgetEstimatedContacts.setJumpToSliceEnabled(True)
+
+        # update markup display
+        self.detected_list_markup_node.GetDisplayNode().SetGlyphTypeFromString("ThickCross2D")
+        self.addObserver(self.detected_list_markup_node, vtk.vtkCommand.ModifiedEvent, self.onDetectedListMarkupNodeModified)
+        self.onDetectedListMarkupNodeModified(None, None)
+
+    def onDetectedListMarkupNodeModified(self, caller, event):
+        # set label of the detected point list
+        self.ui.labelDetectedPointList.setText(self.detected_list_markup_node.GetName())
 
     def onElectrodeSegmentationClicked(self):
         with slicer.util.WaitCursor():
@@ -469,7 +564,7 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.electrodes = self.logic.load_electrodes(self._parameterNode.boltFiducials, self._parameterNode.contactLength_mm, self._parameterNode.contactGap_mm)
             self.logic.bolt_segmentation(self._parameterNode.inputCT,
                                          self.electrodes,
-                                         self._parameterNode.boltSphereRadius_mm,
+                                         self._parameterNode.boltRadius_mm,
                                          self._parameterNode.metalThreshold_HU,
                                          self._parameterNode.boltSegmentation)
 
@@ -509,98 +604,58 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             displayNode.SetVisibility(False)
 
     def onComboBoxCTChanged(self):
-        # disable rendering for the new CT
-        if self._parameterNode.inputCT is not None:
+        self.CT_combo_box_changed = True
+
+    def onShowCTClicked(self):
+        slicer.util.setSliceViewerLayers(background = self._parameterNode.inputCT)
+        slicer.util.resetSliceViews()
+
+    def onCreateFromT1Clicked(self):
+        with slicer.util.WaitCursor():
+            transformNode, segmentationNodeBET = self.logic.register_and_brain_mask(
+                inputCT=self._parameterNode.inputCT,
+                inputT1=self._parameterNode.inputT1,
+                metalThreshold_HU=self._parameterNode.metalThreshold_HU,
+                skipRegistration=self._parameterNode.skipRegistration,
+                save=self._parameterNode.autoSave,
+                path=self.ui.pathLineEditSavePath.currentPath)
+
+            # update parameter node
+            self._parameterNode.brainMask = segmentationNodeBET
+            
+            # clone transformNode
+            if transformNode:
+                shNode = slicer.vtkMRMLSubjectHierarchyNode.GetSubjectHierarchyNode(slicer.mrmlScene)
+                itemIDToClone = shNode.GetItemByDataNode(transformNode)
+                clonedItemID = slicer.modules.subjecthierarchy.logic().CloneSubjectHierarchyItem(shNode, itemIDToClone)
+                self.transformNodeInv = shNode.GetItemDataNode(clonedItemID)
+                self.transformNodeInv.SetName(slicer.mrmlScene.GenerateUniqueName("Transform CT to T1"))
+                self.transformNodeInv.Inverse()
+
+    def updateGUIFromParameterNode(self, caller, event):
+        # update autosave path when CT is changed
+        if self.CT_combo_box_changed:
             self.onRenderingDisabledClicked()
             self.ui.radioButtonRenderingDisabled.setChecked(True)
 
             new_ct = slicer.mrmlScene.GetNodeByID(self.ui.comboBoxCT.currentNodeID)
             if new_ct and new_ct.GetStorageNode():
                 ct_path = new_ct.GetStorageNode().GetFullNameFromFileName()
-                self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
+                self.ui.pathLineEditSavePath.currentPath = os.path.dirname(ct_path)
+            self.CT_combo_box_changed = False
 
-    def onShowCTClicked(self):
-        slicer.util.setSliceViewerLayers(background = self._parameterNode.inputCT)
-        slicer.util.resetSliceViews()
-
-    def onCreateBrainMaskClicked(self):
-        # check HD-BET availability
-        em = slicer.app.extensionsManagerModel()
-        if not em.isExtensionInstalled("HDBrainExtraction"):
-            if not em.installExtensionFromServer("HDBrainExtraction"):
-                raise ValueError(f"Extension HDBrainExtraction is not installed")
-            
-        if not em.isExtensionEnabled("HDBrainExtraction"):
-            raise ValueError(f"Extension HDBrainExtraction is not loaded even though it is installed")
-
-        with slicer.util.WaitCursor():
-            # coregister T1 to CT
-            fixedVolumeNode = self._parameterNode.inputCT
-            movingVolumeNode = self._parameterNode.inputT1
-
-            if not self._parameterNode.skipRegistration:
-                # create ROI segmentation for registration
-                segmentationNodeROI = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
-                segmentationNodeROI.SetReferenceImageGeometryParameterFromVolumeNode(self._parameterNode.inputCT)
-                segmentationNodeROI.CreateDefaultDisplayNodes()
-                segmentId = segmentationNodeROI.GetSegmentation().AddEmptySegment()
-                segmentationNodeROI.GetSegmentation().GetSegment(segmentId)
-                segmentation_array = (slicer.util.arrayFromVolume(fixedVolumeNode) < self._parameterNode.metalThreshold_HU).astype(np.uint8)
-                slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_array, segmentationNodeROI, segmentId)
-
-                transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode", slicer.mrmlScene.GenerateUniqueName("Transform T1 to CT"))
-
-                # Run registration
-                parameters = {}
-                parameters["fixedVolume"] = fixedVolumeNode.GetID()
-                parameters["movingVolume"] = movingVolumeNode.GetID()
-                parameters["linearTransform"] = transformNode.GetID()
-                parameters["useRigid"] = True
-                parameters["samplingPercentage"] = 0.01
-                parameters["initializeTransformMode"] = "useGeometryAlign"
-                parameters["maskProcessingMode"] = "ROI"
-                parameters["fixedBinaryVolume"] = segmentationNodeROI.GetID()
-                cliBrainsFitRigidNode = slicer.cli.run(slicer.modules.brainsfit, None, parameters, wait_for_completion=True)
-
-                # remove ROI segmentation
-                slicer.mrmlScene.RemoveNode(segmentationNodeROI)
-
-            segmentationNodeBET = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", slicer.mrmlScene.GenerateUniqueName("CT Brain mask"))
-
-            # run HD-BET
-            import HDBrainExtractionTool as hd_bet
-            hd_bet_logic = hd_bet.HDBrainExtractionToolLogic()
-            hd_bet_logic.setupPythonRequirements()
-            hd_bet_logic.process(self._parameterNode.inputT1, None, segmentationNodeBET, "cpu")
-            if not self._parameterNode.skipRegistration:
-                segmentationNodeBET.SetAndObserveTransformNodeID(transformNode.GetID())
-                segmentationNodeBET.HardenTransform()
-
-            # update parameter node
-            self._parameterNode.brainMask = segmentationNodeBET
-
-            # save segmentation
-            if self._parameterNode.saveBrainMask:
-                slicer.util.saveNode(segmentationNodeBET, self.ui.pathLineEditBrainMask.currentPath)
-
-    def updateGUIFromParameterNode(self, caller, event):
-        # check skull stripping buttons availability
+        # check skull stripping button availability
         missing = []
         if self._parameterNode.inputCT is None:
             missing.append("CT")
         if self._parameterNode.inputT1 is None:
             missing.append("T1")
         if missing:
-            self.ui.buttonCreateBrainMask.setEnabled(False)
-            self.ui.pathLineEditBrainMask.setEnabled(False)
-            self.ui.buttonCreateBrainMask.setToolTip(f"Missing input(s): {', '.join(missing)}")
-            self.ui.pathLineEditBrainMask.setToolTip(f"Missing input(s): {', '.join(missing)}")
-            self.ui.pathLineEditBrainMask.currentPath = ""
+            self.ui.buttonCreateFromT1.setEnabled(False)
+            self.ui.buttonCreateFromT1.setToolTip(f"Missing input(s): {', '.join(missing)}")
         else:
-            self.ui.buttonCreateBrainMask.setEnabled(True)
-            self.ui.pathLineEditBrainMask.setEnabled(True)
-            self.ui.buttonCreateBrainMask.setToolTip("")
-            self.ui.pathLineEditBrainMask.setToolTip("")
+            self.ui.buttonCreateFromT1.setEnabled(True)
+            self.ui.buttonCreateFromT1.setToolTip("Register T1 to CT and create brain mask using HD-BET.")
 
         # disable rendering buttons and slice views if CT is not selected
         if self._parameterNode.inputCT is None:
@@ -609,12 +664,13 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             self.ui.buttonShowCT.setEnabled(False)
             self.ui.buttonShowCT.setToolTip("Missing CT image")
+            self.ui.pathLineEditSavePath.currentPath = ""
         else:
             self.ui.collapsibleButtonRendering.setEnabled(True)
-            self.ui.collapsibleButtonRendering.setToolTip("")
+            self.ui.collapsibleButtonRendering.setToolTip("View the CT in 3D. 'Head' renders all tissue above the metal threshold; 'Metal' renders only regions above the metal threshold.")
 
             self.ui.buttonShowCT.setEnabled(True)
-            self.ui.buttonShowCT.setToolTip("")
+            self.ui.buttonShowCT.setToolTip("Set the slice views to display the CT image.")
 
         # disable run button if any input is missing
         missing = []
@@ -632,44 +688,83 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.ui.buttonRun.setToolTip("")
 
         # update markup widgets based on selected point list
+        slicer.modules.markups.logic().SetActiveList(self._parameterNode.boltFiducials)
         self.ui.MarkupsPlaceWidget.setCurrentNode(self._parameterNode.boltFiducials)
         self.ui.SimpleMarkupsWidgetInput.setCurrentNode(self._parameterNode.boltFiducials)
 
         # add observer for changing control point label
-        if self.lastSelectedBoltFiducials is not None:
-            self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
-            self.lastSelectedBoltFiducials = None
+        if self.lastSelectedBoltFiducials != self._parameterNode.boltFiducials:
+            if self.lastSelectedBoltFiducials is not None:
+                self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
+                self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.onControlPointDefined)
 
-        if self._parameterNode.boltFiducials is not None:
-            self.lastSelectedBoltFiducials = self._parameterNode.boltFiducials
-            self.addObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
+            if self._parameterNode.boltFiducials is not None:
+                self.lastSelectedBoltFiducials = self._parameterNode.boltFiducials
+                self.ui.buttonPlaceElectrodeTIP.setEnabled(True)
+                
+                self._parameterNode.boltFiducials.GetDisplayNode().SetSelectedColor(0,0,1)
+                self._parameterNode.boltFiducials.GetDisplayNode().SetGlyphTypeFromString("StarBurst2D")
+                
+                self.addObserver(self._parameterNode.boltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
+                self.addObserver(self._parameterNode.boltFiducials, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.onControlPointDefined)
+            else:
+                self.lastSelectedBoltFiducials = None
+                self.ui.buttonPlaceElectrodeTIP.setEnabled(False)
+
+    def onBoltFiducialsDisplayNodeModified(self, caller, event):
+        self.removeObserver(self._parameterNode.boltFiducials.GetDisplayNode(), vtk.vtkCommand.ModifiedEvent, self.onBoltFiducialsDisplayNodeModified)
+        self._parameterNode.boltFiducials.GetDisplayNode().SetSelectedColor(0,0,1)
+        self._parameterNode.boltFiducials.GetDisplayNode().SetGlyphTypeFromString("StarBurst2D")
 
     def volumeModified(self, caller, event):
-        if self._parameterNode.inputCT.GetStorageNode() and self._parameterNode.saveBrainMask:
+        if self._parameterNode.inputCT.GetStorageNode():
             ct_path = self._parameterNode.inputCT.GetStorageNode().GetFullNameFromFileName()
-            self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
+            self.ui.pathLineEditSavePath.currentPath = os.path.dirname(ct_path)
+            self.removeObserver(self._parameterNode.inputCT, vtk.vtkCommand.ModifiedEvent, self.volumeModified)
 
     @vtk.calldata_type(vtk.VTK_OBJECT)
     def onNodeAdded(self, caller, event,  node):
         # Every time a new node is added to the scene check if it's input node
-        if "ct" in node.GetName().lower() and isinstance(node, ContactDetectorParameterNode.__annotations__['inputCT']):
+        if "ct" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['inputCT']):
             self._parameterNode.inputCT = node
             self._parameterNode.inputCT.AddObserver(vtk.vtkCommand.ModifiedEvent, self.volumeModified)
             
-        if "t1" in node.GetName().lower() and isinstance(node, ContactDetectorParameterNode.__annotations__['inputT1']):
+        if "t1" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['inputT1']):
             self._parameterNode.inputT1 = node
     
-        if "fiducials" in node.GetName().lower() and isinstance(node, ContactDetectorParameterNode.__annotations__['boltFiducials']):
+        if "fiducials" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['boltFiducials']):
             self._parameterNode.boltFiducials = node
+            self.addObserver(self._parameterNode.boltFiducials.GetDisplayNode(), vtk.vtkCommand.ModifiedEvent, self.onBoltFiducialsDisplayNodeModified)
+            self.bolt_node_imported = True
 
-        if "mask" in node.GetName().lower() and isinstance(node, ContactDetectorParameterNode.__annotations__['brainMask']):
+        if "mask" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['brainMask']):
             self._parameterNode.brainMask = node
 
+    def onControlPointDefined(self, caller, event):
+        self._parameterNode.placeElectrodeTip = False
+        
+    def index_to_letters(self, index: int) -> str:
+        result = ""
+        while index > 0:
+            index, remainder = divmod(index - 1, 26)
+            result = chr(65 + remainder) + result
+        return result
+
     def onControlPointAdded(self, caller, event):
-        # rename new control point as A-no, B-no, etc
-        if self.ui.MarkupsPlaceWidget.placeModeEnabled:
-            n = caller.GetNumberOfControlPoints()
-            label = f"{chr(ord('A') + n - 1)}-no"
+        if self.bolt_node_imported:
+            self.bolt_node_imported = False
+            return
+        
+        n = caller.GetNumberOfControlPoints()
+        if self._parameterNode.placeElectrodeTip and n-1 > self.bolt_list_selected_index:
+            label = caller.GetNthControlPointLabel(self.bolt_list_selected_index)
+            label = re.sub(r"\d+$", "", label) # remove trailing number
+            label = f"{label}1"
+            caller.SetNthControlPointLabel(n-1, label)
+        else:
+            # rename new control point as A-no, B-no, etc
+            letters = self.index_to_letters(n)
+            label = f"{letters}-no"
             caller.SetNthControlPointLabel(n-1, label)
 
     def cleanup(self) -> None:
@@ -690,9 +785,11 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             self.removeObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self.updateGUIFromParameterNode)
             self.removeObserver(slicer.mrmlScene, slicer.vtkMRMLScene.NodeAddedEvent, self.onNodeAdded)
-            if self.hasObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded):
+            if self.lastSelectedBoltFiducials:
+                self.ui.buttonPlaceElectrodeTIP.setEnabled(False)
                 self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointAddedEvent, self.onControlPointAdded)
-            self.lastSelectedBoltFiducials = None
+                self.removeObserver(self.lastSelectedBoltFiducials, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.onControlPointDefined)
+                self.lastSelectedBoltFiducials = None
 
     def initializeParameterNode(self) -> None:
         """Ensure parameter node exists and observed."""
@@ -703,27 +800,27 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Select default input nodes if nothing is selected yet to save a few clicks for the user
         if not self._parameterNode.inputCT:
-            volume_nodes = slicer.util.getNodesByClass(ContactDetectorParameterNode.__annotations__['inputCT'].__name__)
+            volume_nodes = slicer.util.getNodesByClass(SEEGContactDetectorParameterNode.__annotations__['inputCT'].__name__)
             for node in volume_nodes:
                 if "ct" in node.GetName().lower():
                     self._parameterNode.inputCT = node
                     if node.GetStorageNode():
                         ct_path = node.GetStorageNode().GetFullNameFromFileName()
-                        self.ui.pathLineEditBrainMask.currentPath = os.path.join(os.path.dirname(ct_path), "CT_brain_mask.seg.nrrd")
+                        self.ui.pathLineEditSavePath.currentPath = os.path.dirname(ct_path)
                 if "t1" in node.GetName().lower():
                     self._parameterNode.inputT1 = node
             
-            fiducial_nodes = slicer.util.getNodesByClass(ContactDetectorParameterNode.__annotations__['boltFiducials'].__name__)
+            fiducial_nodes = slicer.util.getNodesByClass(SEEGContactDetectorParameterNode.__annotations__['boltFiducials'].__name__)
             for node in fiducial_nodes:
                 if "fiducials" in node.GetName().lower():
                     self._parameterNode.boltFiducials = node
 
-            mask_nodes = slicer.util.getNodesByClass(ContactDetectorParameterNode.__annotations__['brainMask'].__name__)
+            mask_nodes = slicer.util.getNodesByClass(SEEGContactDetectorParameterNode.__annotations__['brainMask'].__name__)
             for node in mask_nodes:
                 if "mask" in node.GetName().lower():
                     self._parameterNode.brainMask = node
 
-    def setParameterNode(self, inputParameterNode: Optional[ContactDetectorParameterNode]) -> None:
+    def setParameterNode(self, inputParameterNode: Optional[SEEGContactDetectorParameterNode]) -> None:
         """
         Set and observe parameter node.
         Observation is needed because when the parameter node is changed then the GUI must be updated immediately.
@@ -751,11 +848,11 @@ class ContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
 #
-# ContactDetectorLogic
+# SEEGContactDetectorLogic
 #
 
 
-class ContactDetectorLogic(ScriptedLoadableModuleLogic):
+class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
     """This class should implement all the actual
     computation done by your module.  The interface
     should be such that other python code can import
@@ -770,14 +867,73 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
         ScriptedLoadableModuleLogic.__init__(self)
 
     def getParameterNode(self):
-        return ContactDetectorParameterNode(super().getParameterNode())
+        return SEEGContactDetectorParameterNode(super().getParameterNode())
+    
+    def register_and_brain_mask(self,
+            inputCT: vtkMRMLScalarVolumeNode,
+            inputT1: vtkMRMLScalarVolumeNode,
+            metalThreshold_HU: float,
+            skipRegistration: bool,
+            save: bool,
+            path: str) -> vtkMRMLSegmentationNode:
+                # coregister T1 to CT
+                fixedVolumeNode = inputCT
+                movingVolumeNode = inputT1
+
+                if not skipRegistration:
+                    # create ROI segmentation for registration
+                    segmentationNodeROI = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
+                    segmentationNodeROI.SetReferenceImageGeometryParameterFromVolumeNode(inputCT)
+                    segmentationNodeROI.CreateDefaultDisplayNodes()
+                    segmentId = segmentationNodeROI.GetSegmentation().AddEmptySegment()
+                    segmentationNodeROI.GetSegmentation().GetSegment(segmentId)
+                    segmentation_array = (slicer.util.arrayFromVolume(fixedVolumeNode) < metalThreshold_HU).astype(np.uint8)
+                    slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_array, segmentationNodeROI, segmentId)
+
+                    transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode", slicer.mrmlScene.GenerateUniqueName("Transform T1 to CT"))
+
+                    # Run registration
+                    parameters = {}
+                    parameters["fixedVolume"] = fixedVolumeNode.GetID()
+                    parameters["movingVolume"] = movingVolumeNode.GetID()
+                    parameters["linearTransform"] = transformNode.GetID()
+                    parameters["useRigid"] = True
+                    parameters["samplingPercentage"] = 0.01
+                    parameters["initializeTransformMode"] = "useGeometryAlign"
+                    parameters["maskProcessingMode"] = "ROI"
+                    parameters["fixedBinaryVolume"] = segmentationNodeROI.GetID()
+                    cliBrainsFitRigidNode = slicer.cli.run(slicer.modules.brainsfit, None, parameters, wait_for_completion=True)
+
+                    # remove ROI segmentation
+                    slicer.mrmlScene.RemoveNode(segmentationNodeROI)
+
+                segmentationNodeBET = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", slicer.mrmlScene.GenerateUniqueName("CT Brain mask"))
+
+                # run HD-BET
+                import HDBrainExtractionTool as hd_bet
+                hd_bet_logic = hd_bet.HDBrainExtractionToolLogic()
+                hd_bet_logic.setupPythonRequirements()
+                hd_bet_logic.process(inputT1, None, segmentationNodeBET, "cpu")
+                if not skipRegistration:
+                    segmentationNodeBET.SetAndObserveTransformNodeID(transformNode.GetID())
+                    segmentationNodeBET.HardenTransform()
+
+                # save segmentation
+                if save and path:
+                    slicer.util.saveNode(segmentationNodeBET, os.path.join(path, "CT_brain_mask_autosave.seg.nrrd"))
+                    if not skipRegistration:
+                        slicer.util.saveNode(transformNode, os.path.join(path, "transform_T1_to_CT_autosave.h5"))
+
+                return [transformNode if not skipRegistration else None, segmentationNodeBET]
     
     def update_fiducials(self,
                         inputCT: vtkMRMLScalarVolumeNode,
                         fiducial_node: vtkMRMLScalarVolumeNode,
                         selected_electrode: Electrode,
                         contactLength_mm: float,
-                        contactGap_mm: float):
+                        contactGap_mm: float,
+                        save: bool,
+                        path: str):
         selected_points = self.select_contact_points(selected_electrode,
                                                      contactLength_mm,
                                                      contactGap_mm,
@@ -797,6 +953,10 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
                     continue
                 point = self.IJK_to_RAS(point[::-1], inputCT)
                 fiducial_node.SetNthControlPointPosition(fiducial_idx, point)
+
+        # save updated fiducials
+        if save and path:
+            slicer.util.saveNode(fiducial_node, os.path.join(path, "contacts_autosave.fcsv"))
     
     def curve_fitting(self,
             inputCT: vtkMRMLScalarVolumeNode,
@@ -807,7 +967,10 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
             contact_length_mm: float,
             contact_gap_mm: float,
             metal_threshold: float,
-            show_gaussian_balls: bool):
+            show_gaussian_balls: bool,
+            boltFiducials: vtkMRMLMarkupsFiducialNode,
+            save: bool,
+            path: str):
         # import or install dependencies
         try:
             import scipy
@@ -985,6 +1148,11 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
             for i, point in enumerate(points_best_fit):
                 point = self.IJK_to_RAS(point[::-1], inputCT)
                 markupsNode.AddControlPoint(point, f"{electrode.label_prefix}{i+1}")
+
+        # save detections
+        if save and path:
+            slicer.util.saveNode(boltFiducials, os.path.join(path, "bolt_fiducials_autosave.fcsv"))
+            slicer.util.saveNode(markupsNode, os.path.join(path, "contacts_autosave.fcsv"))
 
         return markupsNode
 
@@ -1303,10 +1471,10 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
         for i in range(boltFiducials.GetNumberOfControlPoints()):
             bolt_tip_ras = [0, 0, 0]
             boltFiducials.GetNthControlPointPosition(i, bolt_tip_ras)
-            label = boltFiducials.GetNthControlPointLabel(i)
 
-            if Electrode.split_label(label):
-                prefix, n_contacts = Electrode.split_label(label)
+            label = boltFiducials.GetNthControlPointLabel(i)
+            prefix, n_contacts = Electrode.split_label(label)
+            if n_contacts and n_contacts > 1:
                 electrodes.append(Electrode(bolt_tip_ras, label, contactLength_mm, contactGap_mm))
                 electrode_prefixes.append(prefix)
             else:
@@ -1316,26 +1484,33 @@ class ContactDetectorLogic(ScriptedLoadableModuleLogic):
         for i in range(boltFiducials.GetNumberOfControlPoints()):
             electrode_tip_ras = [0, 0, 0]
             boltFiducials.GetNthControlPointPosition(i, electrode_tip_ras)
-            label = boltFiducials.GetNthControlPointLabel(i)
 
-            if Electrode.split_label(label):
+            label = boltFiducials.GetNthControlPointLabel(i)
+            prefix, n_contacts = Electrode.split_label(label)
+            if n_contacts and n_contacts > 1:
                 continue
-            elif label[-1] == "1" and label[:-1] in electrode_prefixes:
-                electrode_index = electrode_prefixes.index(label[:-1])
+            elif n_contacts == 1 and prefix in electrode_prefixes:
+                electrode_index = electrode_prefixes.index(prefix)
                 electrodes[electrode_index].tip_ras = electrode_tip_ras
                 electrodes[electrode_index].manual_tip = True
             else:
-                slicer.util.errorDisplay(f"Electrode label {label} is not in the correct format. It should be in the format '<label>-<number>', where <label> is the electrode prefix and <number> is the number of contacts.")
-        
+                slicer.util.errorDisplay(f"Electrode label {label} is not in the correct format. It should be in the format '<label>-<number>', where <label> is the electrode prefix and <number> is the number of contacts (>=2).")
+                raise ValueError
+
+        # check duplicity of electrode prefixes
+        if len(electrode_prefixes) != len(set(electrode_prefixes)):
+            slicer.util.errorDisplay("Electrodes with the same prefix are not allowed.")
+            raise ValueError
+
         return electrodes
 
 
 #
-# ContactDetectorTest
+# SEEGContactDetectorTest
 #
 
 
-class ContactDetectorTest(ScriptedLoadableModuleTest):
+class SEEGContactDetectorTest(ScriptedLoadableModuleTest):
     """
     This is the test case for your scripted module.
     Uses ScriptedLoadableModuleTest base class, available at:
@@ -1349,9 +1524,9 @@ class ContactDetectorTest(ScriptedLoadableModuleTest):
     def runTest(self):
         """Run as few or as many tests as needed here."""
         self.setUp()
-        self.test_ContactDetector1()
+        self.test_SEEGContactDetector1()
 
-    def test_ContactDetector1(self):
+    def test_SEEGContactDetector1(self):
         """Ideally you should have several levels of tests.  At the lowest level
         tests should exercise the functionality of the logic with different inputs
         (both valid and invalid).  At higher levels your tests should emulate the
@@ -1370,30 +1545,53 @@ class ContactDetectorTest(ScriptedLoadableModuleTest):
         import SampleData
 
         registerSampleData()
-        inputVolume = SampleData.downloadSample("ContactDetector1")
+
+        inputCT = SampleData.downloadSample("CT with SEEG electrodes")
+        inputT1 = SampleData.downloadSample("Preoperative T1")
+        fiducials = SampleData.downloadSample("Bolt fiducials")
         self.delayDisplay("Loaded test data set")
 
-        inputScalarRange = inputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(inputScalarRange[0], 0)
-        self.assertEqual(inputScalarRange[1], 695)
+        # Logic testing is disabled by default to not overload automatic build machines (pytorch is a huge package).
+        # Set testLogic to True to enable testing.
+        testLogic = True
 
-        outputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode")
-        threshold = 100
-
-        # Test the module logic
-
-        logic = ContactDetectorLogic()
-
-        # Test algorithm with non-inverted threshold
-        logic.process(inputVolume, outputVolume, threshold, True)
-        outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-        self.assertEqual(outputScalarRange[1], threshold)
-
-        # Test algorithm with inverted threshold
-        logic.process(inputVolume, outputVolume, threshold, False)
-        outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-        self.assertEqual(outputScalarRange[1], inputScalarRange[1])
-
+        if testLogic:
+            with slicer.util.WaitCursor():
+                logic = SEEGContactDetectorLogic()
+                self.delayDisplay("Registering and brain masking")
+                brainMask = logic.register_and_brain_mask(inputCT, inputT1, logic.getParameterNode().metalThreshold_HU, False, False, None)
+                slicer.util.setSliceViewerLayers(inputCT, fit=True) # refocus to CT
+                self.delayDisplay("Loading electrodes")
+                electrodes = logic.load_electrodes(fiducials, logic.getParameterNode().contactLength_mm, logic.getParameterNode().contactGap_mm)
+                self.delayDisplay("Bolt segmentation")
+                logic.bolt_segmentation(inputCT,
+                                        electrodes,
+                                        logic.getParameterNode().boltRadius_mm,
+                                        logic.getParameterNode().metalThreshold_HU,
+                                        False)
+                self.delayDisplay("Bolt axis estimation")
+                logic.bolt_axis_estimation(inputCT,
+                                        brainMask,
+                                        electrodes,
+                                        False)
+                self.delayDisplay("Electrode segmentation")
+                logic.eletrode_segmentation(inputCT,
+                                            brainMask,
+                                            electrodes,
+                                            logic.getParameterNode().contactDiameter_mm,
+                                            logic.getParameterNode().metalThreshold_HU,
+                                            False)
+                self.delayDisplay("Curve fitting")
+                logic.curve_fitting(inputCT,
+                                    electrodes,
+                                    logic.getParameterNode().boltRadius_mm,
+                                    logic.getParameterNode().blobSize_sigma,
+                                    logic.getParameterNode().contactDiameter_mm,
+                                    logic.getParameterNode().contactLength_mm,
+                                    logic.getParameterNode().contactGap_mm,
+                                    logic.getParameterNode().metalThreshold_HU,
+                                    False)
+            
+        else:
+            logging.warning("Skipping SEEGContactDetector logic test")
         self.delayDisplay("Test passed")

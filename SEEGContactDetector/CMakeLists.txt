@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-set(MODULE_NAME ContactDetector)
+set(MODULE_NAME SEEGContactDetector)
 
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS

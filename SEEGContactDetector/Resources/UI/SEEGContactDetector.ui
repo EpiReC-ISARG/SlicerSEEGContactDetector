@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ContactDetector</class>
- <widget class="qMRMLWidget" name="ContactDetector">
+ <class>SEEGContactDetector</class>
+ <widget class="qMRMLWidget" name="SEEGContactDetector">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>441</width>
-    <height>1345</height>
+    <height>1434</height>
    </rect>
+  </property>
+  <property name="toolTip">
+   <string/>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="ctkCollapsibleButton" name="collapsibleButtonInputs">
+    <widget class="ctkCollapsibleButton" name="collapsibleButtonImageInputs">
      <property name="text">
-      <string>Inputs</string>
+      <string>Image inputs</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <item row="2" column="1">
@@ -47,24 +50,17 @@
       <item row="1" column="0">
        <widget class="QLabel" name="label_2">
         <property name="toolTip">
-         <string/>
+         <string>Provide a T1 volume if you want to create a new brain mask.</string>
         </property>
         <property name="text">
          <string>T1 for masking:</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
-       <widget class="QPushButton" name="buttonCreateBrainMask">
-        <property name="text">
-         <string>Create brain mask</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="toolTip">
-         <string/>
+         <string>Select the CT volume with implanted electrodes.</string>
         </property>
         <property name="text">
          <string>Input CT:</string>
@@ -138,7 +134,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="label_3">
         <property name="toolTip">
-         <string/>
+         <string>Select the brain mask segmentation, or create a new one from the T1 volume.</string>
         </property>
         <property name="text">
          <string>Brain mask:</string>
@@ -148,7 +144,7 @@
       <item row="3" column="0">
        <widget class="QLabel" name="label_4">
         <property name="toolTip">
-         <string/>
+         <string>Select or create a fiducial list with markups placed on the bolt tips</string>
         </property>
         <property name="text">
          <string>Bolt fiducials:</string>
@@ -179,19 +175,281 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="2">
-       <widget class="qSlicerMarkupsPlaceWidget" name="MarkupsPlaceWidget"/>
+      <item row="2" column="2">
+       <widget class="QPushButton" name="buttonCreateFromT1">
+        <property name="toolTip">
+         <string>Register T1 to CT and create a brain mask using HD-BET.</string>
+        </property>
+        <property name="text">
+         <string>Create from T1</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
    </item>
    <item>
-    <widget class="ctkCollapsibleButton" name="collapsibleButtonInputBoltFiducials">
+    <widget class="ctkCollapsibleButton" name="collapsibleButtonRendering">
      <property name="text">
-      <string>Input bolt fiducials</string>
+      <string>3D Rendering</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+     <property name="collapsed">
+      <bool>false</bool>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
+       <widget class="QRadioButton" name="radioButtonRenderingHead">
+        <property name="toolTip">
+         <string>Render the CT head in 3D, displaying all tissue across the full intensity range. (F5)</string>
+        </property>
+        <property name="text">
+         <string>Head</string>
+        </property>
+        <property name="shortcut">
+         <string>F5</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButtonRenderingMetal">
+        <property name="toolTip">
+         <string>Renders only regions above the metal threshold. (F6)</string>
+        </property>
+        <property name="text">
+         <string>Metal</string>
+        </property>
+        <property name="shortcut">
+         <string>F6</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButtonRenderingDisabled">
+        <property name="toolTip">
+         <string>Disable rendering (F7)</string>
+        </property>
+        <property name="text">
+         <string>Disabled</string>
+        </property>
+        <property name="shortcut">
+         <string>F7</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="ctkCollapsibleButton" name="collapsibleButtonAdvanced">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>Advanced</string>
+     </property>
+     <property name="collapsed">
+      <bool>true</bool>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_5">
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="checkBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Automatically save registration transforms, brain masks, and created fiducials.</string>
+        </property>
+        <property name="text">
+         <string>Auto-save</string>
+        </property>
+        <property name="SlicerParameterName" stdset="0">
+         <string>autoSave</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="toolTip">
+         <string>Set the threshold above which metal appears in the CT (in HU).</string>
+        </property>
+        <property name="text">
+         <string>Metal threshold (HU):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="toolTip">
+         <string>Specify the diameter of the electrode (in mm).</string>
+        </property>
+        <property name="text">
+         <string>Electrode diameter (mm):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="toolTip">
+         <string>Specify the distance between adjacent contacts on the electrode (in mm).</string>
+        </property>
+        <property name="text">
+         <string>Gap between contacts (mm):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="toolTip">
+         <string>Specify the distance from the bolt fiducial to detect the bolt metal (in mm). Metals farther than this distance will be ignored for the selected bolt.</string>
+        </property>
+        <property name="text">
+         <string>Radius around the bolt (mm):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0">
+       <widget class="QLabel" name="label_10">
+        <property name="toolTip">
+         <string>Set the area of the contact modeled as a Gaussian (in sigma units).</string>
+        </property>
+        <property name="text">
+         <string>Gaussian blob size (sigma):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
+        <property name="toolTip">
+         <string>Specify the diameter of the electrode (in mm).</string>
+        </property>
+        <property name="statusTip">
+         <string/>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+        <property name="SlicerParameterName" stdset="0">
+         <string>contactDiameter_mm</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="ctkPathLineEdit" name="pathLineEditSavePath">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Directory to automatically save created data (defaults to the CT directory).</string>
+        </property>
+        <property name="filters">
+         <set>ctkPathLineEdit::Executable|ctkPathLineEdit::Files|ctkPathLineEdit::NoDot|ctkPathLineEdit::NoDotDot|ctkPathLineEdit::PermissionMask|ctkPathLineEdit::Readable|ctkPathLineEdit::Writable</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+        <property name="toolTip">
+         <string>Specify the length of individual contacts on the electrode (in mm).</string>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+        <property name="SlicerParameterName" stdset="0">
+         <string>contactLength_mm</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="toolTip">
+         <string>Specify the length of individual contacts on the electrode (in mm).</string>
+        </property>
+        <property name="text">
+         <string>Contact length (mm):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_6">
+        <property name="toolTip">
+         <string>Set the area of the contact modeled as a Gaussian (in sigma units).</string>
+        </property>
+        <property name="SlicerParameterName" stdset="0">
+         <string>blobSize_sigma</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_5">
+        <property name="toolTip">
+         <string>Specify the distance from the bolt fiducial to detect the bolt metal (in mm). Metals farther than this distance will be ignored for the selected bolt.</string>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+        <property name="SlicerParameterName" stdset="0">
+         <string>boltRadius_mm</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox">
+        <property name="toolTip">
+         <string>Set the threshold above which metal appears in the CT (in HU).</string>
+        </property>
+        <property name="SlicerParameterName" stdset="0">
+         <string>metalThreshold_HU</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+        <property name="toolTip">
+         <string>Specify the distance between adjacent contacts on the electrode (in mm).</string>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+        <property name="SlicerParameterName" stdset="0">
+         <string>contactGap_mm</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="2">
+       <widget class="QCheckBox" name="checkBox_2">
+        <property name="toolTip">
+         <string>Skip registering the T1 to CT and create the brain mask directly.</string>
+        </property>
+        <property name="text">
+         <string>Skip registration</string>
+        </property>
+        <property name="SlicerParameterName" stdset="0">
+         <string>skipRegistration</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="ctkCollapsibleButton" name="collapsibleButtonBoltFiducialList">
+     <property name="toolTip">
+      <string>Each fiducial should be labeled as [electrode_name]-[number_of_contacts], e.g., A-18.</string>
+     </property>
+     <property name="text">
+      <string>Bolt fiducial list</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_6">
+      <item row="0" column="0">
+       <widget class="qSlicerMarkupsPlaceWidget" name="MarkupsPlaceWidget"/>
+      </item>
+      <item row="5" column="0" colspan="2">
        <widget class="qSlicerSimpleMarkupsWidget" name="SimpleMarkupsWidgetInput">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
@@ -213,180 +471,22 @@
         </property>
        </widget>
       </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="ctkCollapsibleButton" name="collapsibleButtonRendering">
-     <property name="text">
-      <string>3D Rendering</string>
-     </property>
-     <property name="checked">
-      <bool>false</bool>
-     </property>
-     <property name="collapsed">
-      <bool>true</bool>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <widget class="QRadioButton" name="radioButtonRenderingDisabled">
-        <property name="text">
-         <string>Disabled</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="radioButtonRenderingHead">
-        <property name="text">
-         <string>Head</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="radioButtonRenderingMetal">
-        <property name="text">
-         <string>Metal</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="ctkCollapsibleButton" name="collapsibleButtonAdvanced">
-     <property name="text">
-      <string>Advanced</string>
-     </property>
-     <property name="collapsed">
-      <bool>true</bool>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_5">
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="checkBox">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="text">
-         <string>Save CT brain mask:</string>
-        </property>
-        <property name="SlicerParameterName" stdset="0">
-         <string>saveBrainMask</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Metal threshold (HU):</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>Electrode diameter (mm):</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="label_8">
-        <property name="text">
-         <string>Gap between contacts (mm):</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Sphere radius around the bolt (mm):</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="0">
-       <widget class="QLabel" name="label_10">
-        <property name="text">
-         <string>Gaussian blob size (sigma):</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
-        <property name="singleStep">
-         <double>0.100000000000000</double>
-        </property>
-        <property name="SlicerParameterName" stdset="0">
-         <string>contactDiameter_mm</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="ctkPathLineEdit" name="pathLineEditBrainMask">
+      <item row="0" column="1">
+       <widget class="QPushButton" name="buttonPlaceElectrodeTIP">
         <property name="enabled">
          <bool>false</bool>
         </property>
-        <property name="filters">
-         <set>ctkPathLineEdit::Executable|ctkPathLineEdit::Files|ctkPathLineEdit::NoDot|ctkPathLineEdit::NoDotDot|ctkPathLineEdit::PermissionMask|ctkPathLineEdit::Readable|ctkPathLineEdit::Writable</set>
+        <property name="toolTip">
+         <string>Check if you want to place the TIP of the selected electrode.</string>
         </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
-        <property name="singleStep">
-         <double>0.100000000000000</double>
-        </property>
-        <property name="SlicerParameterName" stdset="0">
-         <string>contactLength_mm</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_6">
         <property name="text">
-         <string>Contact length (mm):</string>
+         <string>Place electrode TIP</string>
         </property>
-       </widget>
-      </item>
-      <item row="8" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_6">
-        <property name="SlicerParameterName" stdset="0">
-         <string>blobSize_sigma</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_5">
-        <property name="singleStep">
-         <double>0.100000000000000</double>
+        <property name="checkable">
+         <bool>true</bool>
         </property>
         <property name="SlicerParameterName" stdset="0">
-         <string>boltSphereRadius_mm</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox">
-        <property name="SlicerParameterName" stdset="0">
-         <string>metalThreshold_HU</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
-        <property name="singleStep">
-         <double>0.100000000000000</double>
-        </property>
-        <property name="SlicerParameterName" stdset="0">
-         <string>contactGap_mm</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0" colspan="2">
-       <widget class="QCheckBox" name="checkBox_2">
-        <property name="text">
-         <string>Skip registration while brain segmentation</string>
-        </property>
-        <property name="SlicerParameterName" stdset="0">
-         <string>skipRegistration</string>
+         <string>placeElectrodeTip</string>
         </property>
        </widget>
       </item>
@@ -394,14 +494,127 @@
     </widget>
    </item>
    <item>
-    <widget class="ctkCollapsibleButton" name="collapsibleButtonEstimatedContacts">
+    <widget class="ctkCollapsibleButton" name="collapsibleButtonDetectedContactList">
+     <property name="toolTip">
+      <string>List of detected contacts. Selecting a markup refocuses the slice views for easy verification. If a detection is misaligned, adjust the selected electrode using the spin boxes below.</string>
+     </property>
      <property name="text">
-      <string>Estimated contacts</string>
+      <string>Detected contact list</string>
      </property>
      <property name="collapsed">
       <bool>false</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
+      <item row="1" column="0">
+       <widget class="QWidget" name="shiftFiducialsWidget" native="true">
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QLabel" name="label_11">
+             <property name="toolTip">
+              <string/>
+             </property>
+             <property name="text">
+              <string>Current contact list:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelDetectedPointList">
+             <property name="toolTip">
+              <string>Name of node used to store detected contacts.</string>
+             </property>
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="buttonDeleteDetectedContacts">
+             <property name="toolTip">
+              <string>Delete detected contact list.</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="buttonHideDetectedContacts">
+             <property name="toolTip">
+              <string>Hide/show detected contact list.</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QGridLayout" name="gridLayout_4">
+           <item row="4" column="0">
+            <widget class="QLabel" name="labelShiftElectrodeMicrostep">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>Adjust the positions of contacts for the currently selected electrode.</string>
+             </property>
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="4">
+            <widget class="QSpinBox" name="spinBoxShiftElectrodeByContact">
+             <property name="toolTip">
+              <string>Adjust the positions of contacts for the currently selected electrode.</string>
+             </property>
+             <property name="minimum">
+              <number>-2</number>
+             </property>
+             <property name="maximum">
+              <number>2</number>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="4">
+            <widget class="QSpinBox" name="spinBoxShiftElectrodeMicrostep">
+             <property name="toolTip">
+              <string>Adjust the positions of contacts for the currently selected electrode.</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="labelShiftElectrodeByContact">
+             <property name="toolTip">
+              <string>Adjust the positions of contacts for the currently selected electrode.</string>
+             </property>
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
       <item row="0" column="0">
        <widget class="qSlicerSimpleMarkupsWidget" name="SimpleMarkupsWidgetEstimatedContacts">
         <property name="sizePolicy">
@@ -409,6 +622,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string/>
         </property>
         <property name="enterPlaceModeOnNodeChange">
          <bool>false</bool>
@@ -422,75 +638,6 @@
         <property name="optionsVisible">
          <bool>false</bool>
         </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QWidget" name="shiftFiducialsWidget" native="true">
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <item>
-          <layout class="QGridLayout" name="gridLayout_4">
-           <item row="0" column="0">
-            <widget class="QLabel" name="labelShiftElectrodeByContact">
-             <property name="text">
-              <string>TextLabel</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QSpinBox" name="spinBoxShiftElectrodeByContact">
-             <property name="minimum">
-              <number>-2</number>
-             </property>
-             <property name="maximum">
-              <number>2</number>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="labelShiftElectrodeMicrostep">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>TextLabel</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <spacer name="horizontalSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item row="1" column="1">
-            <spacer name="horizontalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item row="1" column="2">
-            <widget class="QSpinBox" name="spinBoxShiftElectrodeMicrostep"/>
-           </item>
-          </layout>
-         </item>
-        </layout>
        </widget>
       </item>
      </layout>
@@ -619,13 +766,6 @@
     </spacer>
    </item>
    <item>
-    <widget class="QPushButton" name="buttonViewInScene">
-     <property name="text">
-      <string>View in scene</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QPushButton" name="buttonRun">
      <property name="minimumSize">
       <size>
@@ -633,8 +773,27 @@
        <height>50</height>
       </size>
      </property>
+     <property name="toolTip">
+      <string/>
+     </property>
      <property name="text">
-      <string>Run</string>
+      <string>Run (TRACE electrodes)</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="buttonViewInScene">
+     <property name="toolTip">
+      <string>Reset views, enable head rendering, adjust threshold and CT color, and hide the brain mask and bolt fiducials.</string>
+     </property>
+     <property name="text">
+      <string>View in Scene (Show electrodes in T1)</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -683,7 +842,7 @@
  <resources/>
  <connections>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>comboBoxBoltFiducials</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -699,7 +858,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>comboBoxBrainMask</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -715,7 +874,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>comboBoxCT</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -731,7 +890,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>comboBoxT1</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -747,7 +906,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>SimpleMarkupsWidgetInput</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -763,7 +922,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>MarkupsPlaceWidget</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -779,7 +938,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>ContactDetector</sender>
+   <sender>SEEGContactDetector</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>SimpleMarkupsWidgetEstimatedContacts</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>

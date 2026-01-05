@@ -655,7 +655,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         # Every time a new node is added to the scene check if it's input node
         if "ct" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['inputCT']):
             self._parameterNode.inputCT = node
-            self._parameterNode.inputCT.AddObserver(vtk.vtkCommand.ModifiedEvent, self.volumeModified)
+            self.addObserver(self._parameterNode.inputCT, vtk.vtkCommand.ModifiedEvent, self.volumeModified)
             
         if "t1" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['inputT1']):
             self._parameterNode.inputT1 = node

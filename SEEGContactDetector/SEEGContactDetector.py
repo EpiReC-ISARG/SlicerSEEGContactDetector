@@ -16,7 +16,7 @@ from slicer.parameterNodeWrapper import (
     WithinRange,
 )
 
-from slicer import vtkMRMLScalarVolumeNode, vtkMRMLSegmentationNode, vtkMRMLMarkupsFiducialNode
+from slicer import vtkMRMLScalarVolumeNode, vtkMRMLSegmentationNode, vtkMRMLMarkupsFiducialNode, vtkMRMLTransformNode
 
 import numpy as np
 
@@ -81,13 +81,13 @@ def registerSampleData():
         sampleName="CT with SEEG electrodes",
         # Thumbnail should have size of approximately 260x280 pixels and stored in Resources/Icons folder.
         # It can be created by Screen Capture module, "Capture all views" option enabled, "Number of images" set to "Single".
-        thumbnailFileName=os.path.join(iconsPath, "SEEGContactDetector1.png"),
+        thumbnailFileName=os.path.join(iconsPath, "CT_with_SEEG_electrodes.png"),
         # Download URL and target file name
-        uris="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases/download/v0.2.0/SampleData_CT_defaced.nii.gz",
+        uris="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases/download/v0.1.0/CT_with_SEEG_electrodes.nii.gz",
         fileNames="SEEGContactDetector_CT.nii.gz",
         # Checksum to ensure file integrity. Can be computed by this command:
         #  import hashlib; print(hashlib.sha256(open(filename, "rb").read()).hexdigest())
-        checksums="SHA256:232c9756f9232c5f9446effce9290f592086a650dc3bb22018d49ad9f24b0d1e",
+        checksums="SHA256:51c9d0f62ae70962579f4060e56e059ed131a25b2d2ec9990e15efb1f23405a4",
         # This node name will be used when the data set is loaded
         nodeNames="CT with SEEG electrodes",
     )
@@ -96,10 +96,10 @@ def registerSampleData():
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
         category="SEEG Contact Detector",
         sampleName="Preoperative T1",
-        thumbnailFileName=os.path.join(iconsPath, "SEEGContactDetector2.png"),
-        uris="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases/download/v0.2.0/SampleData_T1_defaced.nii.gz",
+        thumbnailFileName=os.path.join(iconsPath, "Preoperative_T1.png"),
+        uris="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases/download/v0.1.0/Preoperative_T1.nii.gz",
         fileNames="SEEGContactDetector_T1.nii.gz",
-        checksums="SHA256:355bd49dcb51d1da07dd4f170dc892115f61f1cff840309cd93b2f879e5be7ab",
+        checksums="SHA256:0d74509d4506765e346b0e617e7b1054d8ae9b692495ebab6abf71513ce8e1e0",
         nodeNames="Preoperative T1",
     )
 
@@ -107,10 +107,10 @@ def registerSampleData():
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
         category="SEEG Contact Detector",
         sampleName="Bolt fiducials",
-        thumbnailFileName=os.path.join(iconsPath, "SEEGContactDetector2.png"),
-        uris="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases/download/v0.2.0/SampleData_BoltFiducials.fcsv",
+        thumbnailFileName=os.path.join(iconsPath, "Bolt_fiducials.png"),
+        uris="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases/download/v0.1.0/Bolt_fiducials.fcsv",
         fileNames="SEEGContactDetector_BoltFiducials.fcsv",
-        checksums="SHA256:ac4b819f6c5fc10f831133db4e05a21b19a43ff8170ae48b7c00d9dec5821633",
+        checksums="SHA256:88ff8700b3c57e02fd12d370dc705edb1bf9bc9039c42aaf7c0f408823d3e109",
         nodeNames="Bolt fiducials",
     )
 
@@ -728,7 +728,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         # Every time a new node is added to the scene check if it's input node
         if "ct" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['inputCT']):
             self._parameterNode.inputCT = node
-            self._parameterNode.inputCT.AddObserver(vtk.vtkCommand.ModifiedEvent, self.volumeModified)
+            self.addObserver(self._parameterNode.inputCT, vtk.vtkCommand.ModifiedEvent, self.volumeModified)
             
         if "t1" in node.GetName().lower() and isinstance(node, SEEGContactDetectorParameterNode.__annotations__['inputT1']):
             self._parameterNode.inputT1 = node
@@ -876,7 +876,7 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
             metalThreshold_HU: float,
             skipRegistration: bool,
             save: bool,
-            path: str) -> vtkMRMLSegmentationNode:
+            path: str) -> tuple[vtkMRMLTransformNode, vtkMRMLSegmentationNode]:
                 # coregister T1 to CT
                 fixedVolumeNode = inputCT
                 movingVolumeNode = inputT1
@@ -1560,7 +1560,7 @@ class SEEGContactDetectorTest(ScriptedLoadableModuleTest):
             with slicer.util.WaitCursor():
                 logic = SEEGContactDetectorLogic()
                 self.delayDisplay("Registering and brain masking")
-                brainMask = logic.register_and_brain_mask(inputCT, inputT1, logic.getParameterNode().metalThreshold_HU, False, False, None)
+                transform, brainMask = logic.register_and_brain_mask(inputCT, inputT1, logic.getParameterNode().metalThreshold_HU, False, False, None)
                 slicer.util.setSliceViewerLayers(inputCT, fit=True) # refocus to CT
                 self.delayDisplay("Loading electrodes")
                 electrodes = logic.load_electrodes(fiducials, logic.getParameterNode().contactLength_mm, logic.getParameterNode().contactGap_mm)
@@ -1591,7 +1591,10 @@ class SEEGContactDetectorTest(ScriptedLoadableModuleTest):
                                     logic.getParameterNode().contactLength_mm,
                                     logic.getParameterNode().contactGap_mm,
                                     logic.getParameterNode().metalThreshold_HU,
-                                    False)
+                                    False,
+                                    None,
+                                    False,
+                                    None)
             
         else:
             logging.warning("Skipping SEEGContactDetector logic test")

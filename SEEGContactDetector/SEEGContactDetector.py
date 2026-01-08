@@ -309,10 +309,11 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                 t1 = slicer.util.loadVolume(os.path.join(root, t1_path))
 
                 # generate brain mask - it is automatically saved
-                self.onCreateBrainMaskClicked()
+                self.onCreateFromT1Clicked()
 
                 # cleanup
-                slicer.mrmlScene.RemoveNode(slicer.util.getNode("CT brain mask"))
+                slicer.mrmlScene.RemoveNode(slicer.util.getNode("CT Brain mask*"))
+                slicer.mrmlScene.RemoveNode(slicer.util.getNode("Transform*"))
                 slicer.mrmlScene.RemoveNode(slicer.util.getNode("Transform*"))
                 slicer.mrmlScene.RemoveNode(ct)
                 slicer.mrmlScene.RemoveNode(t1)
@@ -330,7 +331,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
             for file in files:
                 if "CT" in file and file.endswith((".nii", ".nii.gz")):
                     ct_path = file
-                elif file == "BETmask.seg.nrrd":
+                elif file == "CT_brain_mask_autosave.seg.nrrd":
                     brain_mask_path = file
                 elif file == "BoltFiducials.fcsv":
                     fiducials_path = file
@@ -347,7 +348,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                 self.onRunClicked()
 
                 # save results
-                estimated_contacts = slicer.util.getNode("Electrodes")
+                estimated_contacts = slicer.util.getNode("Electrodes*")
                 slicer.util.saveNode(estimated_contacts, os.path.join(root, "ContactDetector.mrk.json"))
 
                 # cleanup

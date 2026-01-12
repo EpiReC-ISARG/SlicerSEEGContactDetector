@@ -43,14 +43,14 @@
 - [x] add parameters into the parameter node and check scene saving
 - [x] remove step-by-step, add event on run all click
 - [x] create tooltip help
-- [ ] add module description, help and acknowledgement
+- [x] add module description, help and acknowledgement
 - [x] icon
 - [x] mrml scene (ocean, etc)
 - [x] Sample data (defaced)
 - [x] Tests
 - [x] Documentation
 - [x] GitHub description
-- [ ] Check CMakeLists
+- [x] Check CMakeLists
 - [x] Unify extension and module names
 - [ ] EN short video
 - [x] EN documentation

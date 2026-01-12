@@ -1,0 +1,15 @@
+site_name: SEEG Contact Detector
+repo_url: https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector
+theme:
+  name: material
+  favicon: images/favicon.png
+  logo: images/favicon.png
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Module Overview: module_overview.md
+  - Sample data: sample_data.md
+  - Usage: usage.md
+  - Advanced Parameters: advanced.md
+  - Troubleshooting: troubleshooting.md
+  - Acknowledgements: acknowledgements.md

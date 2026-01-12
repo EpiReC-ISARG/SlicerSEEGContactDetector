@@ -39,16 +39,16 @@ class SEEGContactDetector(ScriptedLoadableModule):
         # TODO: update with short description of the module and a link to online module documentation
         # _() function marks text as translatable to other languages
         self.parent.helpText = _("""
-This is an example of scripted loadable module bundled in an extension.
-See more information in <a href="https://github.com/organization/projectname#SEEGContactDetector">module documentation</a>.
+SEEG Contact Detector is a 3D Slicer extension for automatic localization of SEEG electrode contact centers from post-implantation CT data. The module uses a model-based approach that respects electrode geometry and accounts for bending, twisting, and partial contact visibility. It supports optional MRI-based brain masking, manual correction tools, and interactive visualization for efficient clinical review.
+See more information in <a href="https://epirec-isarg.github.io/SlicerSEEGContactDetector/">module documentation</a>.
 """)
         # organization, grant and thanks
         self.parent.acknowledgementText = _("""
-The implementation builds upon the design published in [1], employing standard 3D Slicer functionalities and relying on the external 3D Slicer extenstion <i>HDBrainExtraction</i> which is based on HD-BET [2].
+The implementation builds upon the design published in [1], employing standard 3D Slicer functionalities and relying on the external 3D Slicer extension <a href="https://github.com/lassoan/SlicerHDBrainExtraction"><i>HDBrainExtraction</i></a>, which is based on HD-BET [2].
 <h4>References</h4>
 <ul style="list-style-type: none">
 <li id="ref1">[1] Janca, Radek, et al. "Automated identification of stereoelectroencephalography contacts and measurement of factors influencing accuracy of frame stereotaxy." <i>IEEE Journal of Biomedical and Health Informatics 27.7 (2023): 3326-3336.</li>
-<li id="ref2">[2] Isensee F, Schell M, Tursunova I, Brugnara G, Bonekamp D, Neuberger U, Wick A, Schlemmer HP, Heiland S, Wick W, Bendszus M, Maier-Hein KH, Kickingereder P. Automated brain extraction of multi-sequence MRI using artificial neural networks. Hum Brain Mapp. 2019; 1–13. <a href="https://doi.org/10.1002/hbm.24750">https://doi.org/10.1002/hbm.24750</li>
+<li id="ref2">[2] Isensee F, Schell M, Tursunova I, Brugnara G, Bonekamp D, Neuberger U, Wick A, Schlemmer HP, Heiland S, Wick W, Bendszus M, Maier-Hein KH, Kickingereder P. Automated brain extraction of multi-sequence MRI using artificial neural networks. Hum Brain Mapp. 2019; 1–13. <a href="https://doi.org/10.1002/hbm.24750">https://doi.org/10.1002/hbm.24750</a></li>
 </ul>
 <p>This work was supported by the Ministry of Health of the Czech Republic (grant projects AZV NU23-08-00528, NW25-04-00427, NW25-08-00371); project number LX22NPO5107 (MEYS), financed by EU—Next Generation EU; ERDF-Project Brain Dynamics (No. CZ.02.01.01/00/22_008/0004643); and the Grant Agency of the Czech Technical University in Prague (SGS23/170/OHK3/3T/13).</p>
 """)

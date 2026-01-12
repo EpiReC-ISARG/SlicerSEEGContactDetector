@@ -4,11 +4,11 @@ project(SlicerSEEGContactDetector)
 
 #-----------------------------------------------------------------------------
 # Extension meta-information
-set(EXTENSION_HOMEPAGE "https://www.slicer.org/wiki/Documentation/Nightly/Extensions/SlicerSEEGContactDetector")
+set(EXTENSION_HOMEPAGE "https://epirec-isarg.github.io/SlicerSEEGContactDetector/")
 set(EXTENSION_CONTRIBUTORS "Jakub Smid (CTU in Prague, Charles University), Radek Janca (CTU in Prague)")
-set(EXTENSION_DESCRIPTION "This is an example of a simple extension")
-set(EXTENSION_ICONURL "https://www.example.com/Slicer/Extensions/SlicerSEEGContactDetector.png")
-set(EXTENSION_SCREENSHOTURLS "https://www.example.com/Slicer/Extensions/SlicerSEEGContactDetector/Screenshots/1.png")
+set(EXTENSION_DESCRIPTION "SEEG Contact Detector is a 3D Slicer extension for automatic localization of SEEG electrode contact centers from post-implantation CT data. The module uses a model-based approach that respects electrode geometry and accounts for bending, twisting, and partial contact visibility. It supports optional MRI-based brain masking, manual correction tools, and interactive visualization for efficient clinical review.")
+set(EXTENSION_ICONURL "https://raw.githubusercontent.com/EpiReC-ISARG/SlicerSEEGContactDetector/refs/heads/master/ContactDetector.png")
+set(EXTENSION_SCREENSHOTURLS "https://raw.githubusercontent.com/EpiReC-ISARG/SlicerSEEGContactDetector/refs/heads/master/Screenshot01.png https://raw.githubusercontent.com/EpiReC-ISARG/SlicerSEEGContactDetector/refs/heads/master/Screenshot02.png")
 set(EXTENSION_DEPENDS "HDBrainExtractionTool") # Specified as a list or "NA" if no dependencies
 
 #-----------------------------------------------------------------------------

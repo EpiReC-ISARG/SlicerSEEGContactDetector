@@ -884,7 +884,7 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
 
         # save updated fiducials
         if save and path:
-            slicer.util.saveNode(fiducial_node, os.path.join(path, "contacts_autosave.fcsv"))
+            slicer.util.saveNode(fiducial_node, os.path.join(path, "contacts_autosave.mrk.json"))
     
     def curve_fitting(self,
             inputCT: vtkMRMLScalarVolumeNode,
@@ -1079,8 +1079,8 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
 
         # save detections
         if save and path:
-            slicer.util.saveNode(boltFiducials, os.path.join(path, "bolt_fiducials_autosave.fcsv"))
-            slicer.util.saveNode(markupsNode, os.path.join(path, "contacts_autosave.fcsv"))
+            slicer.util.saveNode(boltFiducials, os.path.join(path, "bolt_fiducials_autosave.mrk.json"))
+            slicer.util.saveNode(markupsNode, os.path.join(path, "contacts_autosave.mrk.json"))
 
         return markupsNode
 

@@ -134,10 +134,10 @@
       <item row="2" column="0">
        <widget class="QLabel" name="label_3">
         <property name="toolTip">
-         <string>Select the brain mask segmentation, or create a new one from the T1 volume.</string>
+         <string>Select the CT brain mask segmentation, or create a new one from the T1 volume.</string>
         </property>
         <property name="text">
-         <string>Brain mask:</string>
+         <string>CT Brain mask:</string>
         </property>
        </widget>
       </item>
@@ -561,6 +561,23 @@
             </widget>
            </item>
           </layout>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBoxProjectionVisibility">
+           <property name="text">
+            <string>Projection Visibility</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBoxJumpSlicesShift">
+           <property name="text">
+            <string>Jump slices after electrode shift</string>
+           </property>
+          </widget>
          </item>
          <item>
           <layout class="QGridLayout" name="gridLayout_4">

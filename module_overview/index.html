@@ -1,7 +1,4 @@
-
-<!doctype html>
-<html lang="en" class="no-js">
-  <head>
+<!DOCTYPE html><html lang="en" class="no-js"><head>
     
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -41,7 +38,7 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
@@ -52,7 +49,17 @@
 
     
     
-  </head>
+  <link href="../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
   
   
     <body dir="ltr">
@@ -87,7 +94,7 @@
     </a>
     <label class="md-header__button md-icon" for="__drawer">
       
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
     </label>
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
@@ -115,7 +122,7 @@
       
         <label class="md-header__button md-icon" for="__search">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
         </label>
         <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
@@ -124,15 +131,15 @@
       <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
         </button>
       </nav>
       
@@ -156,7 +163,7 @@
         <a href="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
   </div>
   <div class="md-source__repository">
     GitHub
@@ -180,7 +187,7 @@
           
             
               
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -201,7 +208,7 @@
       <a href="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
   </div>
   <div class="md-source__repository">
     GitHub
@@ -414,7 +421,7 @@
   <span class="md-ellipsis">
     
   
-    Sample data
+    Sample Data
   
 
     
@@ -543,7 +550,7 @@
             
             
               
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -644,7 +651,7 @@
 
 <h1 id="module-overview">Module Overview</h1>
 <p>The <strong>SEEG Contact Detector</strong> supports multiple input configurations depending on the data available. At a minimum, the module requires a <strong>post-implantation CT volume</strong> and a <strong>brain mask segmentation</strong> or a <strong>T1-weighted MRI volume</strong>. The following sections describe the workflow based on the available input modalities.</p>
-<p><img alt="Module overview" src="../images/module_overview.png" /></p>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../images/module_overview.png" data-desc-position="bottom"><img alt="Module overview" src="../images/module_overview.png"></a></p>
 <p>The module consists of an <strong>Input</strong> section, where the user can provide various combinations of data. To simplify setup, several inputs are selected automatically based on node names:</p>
 <ul>
 <li>A volume containing <strong><code>CT</code></strong> in its name is automatically selected as <strong>Input CT</strong></li>
@@ -653,10 +660,10 @@
 <li>A Markups node containing <strong><code>Fiducials</code></strong> in its name is automatically selected as <strong>Bolt fiducials</strong></li>
 </ul>
 <p>When a post-implantation CT scan with SEEG electrodes is provided, the <strong>Show CT</strong> button can be used to refocus all 2D slice views on the selected CT volume.</p>
-<hr />
+<hr>
 <h2 id="brain-mask">Brain Mask</h2>
 <p>The algorithm requires a brain mask segmentation in <strong>CT space</strong>. If a brain mask is loaded manually, it must already be registered to the CT.</p>
-<p><img alt="Brain mask" src="../images/brainmask.gif" /></p>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../images/brainmask.gif" data-desc-position="bottom"><img alt="Brain mask" src="../images/brainmask.gif"></a></p>
 <p>If a brain mask is not available, a T1-weighted MRI volume can be provided to generate it automatically. After clicking <strong>Create from T1</strong>, the module:</p>
 <ol>
 <li>Registers the T1 volume to the CT</li>
@@ -669,10 +676,10 @@
 </li>
 </ol>
 <p>The <strong>Transform T1 to CT</strong> is immediately applied to the T1 volume, and the generated <strong>CT Brain mask</strong> is automatically selected as the active brain mask for the module.</p>
-<hr />
+<hr>
 <h2 id="bolt-fiducials">Bolt Fiducials</h2>
 <p>The final required input is <strong>Bolt fiducials</strong>, which represent the tips of the anchor bolts of the SEEG electrodes. A Markups node can be loaded from a file or created manually using this module.</p>
-<p><img alt="Anchor bolts with fiducials" src="../images/bolt_fiducials.png" title="Ideal fiducial placement" /></p>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../images/bolt_fiducials.png" data-desc-position="bottom"><img alt="Anchor bolts with fiducials" src="../images/bolt_fiducials.png" title="Ideal fiducial placement"></a></p>
 <p>To manually place bolt fiducials:</p>
 <ol>
 <li>Use <strong>Head</strong> rendering (<strong>F5</strong>) to orient the patient’s head according to the implantation plan</li>
@@ -693,18 +700,20 @@
 <li><code>label</code> identifies the electrode and may include letters, numbers, and dashes</li>
 <li><code>number_of_contacts</code> specifies the total number of contacts on that electrode and must appear after the last dash</li>
 </ul>
-<hr />
+<hr>
 <h2 id="running-the-detection">Running the Detection</h2>
 <p>Once all anchor bolts are correctly labeled, click <strong>Run</strong> to start the detection process.</p>
-<p>After completion, a new Markups node named <strong>Electrodes</strong> is created. This node contains the estimated centers of the contacts for each electrode, named using the format: <code>[label][contact_index]</code>, where <code>contact_index</code> denotes the contact position starting from the <strong>tip of the electrode</strong> toward the <strong>entry point</strong>.</p>
-<p><img alt="Detected contacts" src="../images/detections.png" title="Detected contacts" /></p>
-<p>The detected contact list is automatically expanded, allowing you to view the coordinates of all contacts. Selecting a contact in the list automatically refocuses the slice views on its location. You can also use the <strong>down arrow key</strong> to navigate sequentially through the detected contacts. This makes it quick and easy to visually inspect all detections.</p>
-<p><img alt="Detected contact list" src="../images/detections_list.png" /></p>
+<p>After the process completes, a new Markup node named <strong>Contacts</strong> is created. This node contains the estimated centers of the contacts for each electrode, named using the format: <code>[label][contact_index]</code>, where <code>contact_index</code> denotes the contact position starting from the <strong>tip of the electrode</strong> toward the <strong>entry point</strong>.</p>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../images/detections.png" data-desc-position="bottom"><img alt="Detected contacts" src="../images/detections.png" title="Detected contacts"></a></p>
+<p>The Detected contact list is automatically expanded, allowing you to view the coordinates of all contacts. Selecting a contact in the list automatically refocuses the slice views on its location. You can also use the <strong>down arrow key</strong> to navigate sequentially through the detected contacts. This makes it quick and easy to visually inspect all detections.</p>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../images/detected_contact_list.png" data-desc-position="bottom"><img alt="Detected contact list" src="../images/detected_contact_list.png"></a></p>
+<p>The Current contact list displays the name of the corresponding Markup node, which can also be found in the Data module. This Markups node contains all detected contact centers and can be saved, hidden, or deleted as needed.</p>
+<p>When <strong>Projection Visibility</strong> is enabled, all detected contacts are displayed in the slice views, including those not located in the currently visible slice. When <strong>Projection Visibility</strong> is disabled, only contacts intersecting the current slice are shown.</p>
 <p>If some detected contacts are misaligned, the module provides options to manually adjust the results. Please refer to the <strong><a href="../troubleshooting/">Troubleshooting</a></strong> section for detailed instructions.</p>
-<hr />
+<hr>
 <h2 id="view-in-scene">View in Scene</h2>
-<p>The <strong>View in Scene</strong> button configures the scene for rapid visual inspection of detected electrodes, primarily intended for radiologists and neurologists.</p>
-<p><img alt="Detections after View in Scene" src="../images/view_in_scene.png" /></p>
+<p>The <strong>View in Scene</strong> button configures the scene for rapid visual inspection of detected contacts, primarily intended for radiologists and neurologists.</p>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../images/view_in_scene.png" data-desc-position="bottom"><img alt="Detections after View in Scene" src="../images/view_in_scene.png"></a></p>
 <p>When activated:</p>
 <ul>
 <li>Slice views and 3D rendering are re-centered</li>
@@ -718,7 +727,7 @@
 <li>Thresholding is enabled so that only metallic structures are visible</li>
 <li>The brain mask and input bolt fiducials are hidden</li>
 </ul>
-<p>If the brain mask was generated using <strong>Create from T1</strong> and a <strong>Transform CT to T1</strong> exists, this transform is applied so that the CT, brain mask, bolt fiducials, and detected electrodes are all displayed in <strong>T1 space</strong>.</p>
+<p>If the brain mask was generated using <strong>Create from T1</strong> and a <strong>Transform CT to T1</strong> exists, this transform is applied so that the CT, brain mask, bolt fiducials, and detected contacts are all displayed in <strong>T1 space</strong>.</p>
 <p>When <strong>View in Scene</strong> is deactivated:</p>
 <ul>
 <li>CT coloring is restored</li>
@@ -780,5 +789,7 @@
       <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
-  </body>
-</html>
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>

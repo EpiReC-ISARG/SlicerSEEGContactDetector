@@ -38,4 +38,4 @@ Below is a screenshot of the implantation plan for the provided patient. Beneath
 3. Select the input **CT**, **T1**, and **Bolt fiducials**.
 4. Click **Create from T1** to register the T1 to the CT and generate a brain mask.
 5. Click **Run** to execute the algorithm.
-6. An **Electrodes** node will be created in the **Data** module, and the detected contacts will be displayed in the slice views and the 3D view.
+6. An **Contacts** node will be created in the **Data** module, and the detected contacts will be displayed in the slice views and the 3D view.

@@ -30,7 +30,7 @@ In some cases, the algorithm may fail to segment the correct contact, typically 
 
 If the remaining contacts (e.g., G2, G3, etc.) are correctly detected and centered within the contacts, you can correct the detection by shifting the contacts along the electrode axis.
 
-To fix electrode **G**, select any of its contacts in the **Detected contact list**, then use **Shift G fiducials by contact** below the table. You can shift the detections by up to two contacts in either direction. In this example, shifting by **+1 contact** produces the correct result.
+To fix electrode **G**, select any of its contacts in the **Detected contact list**, then use **Shift G fiducials by contact** below the table. You can shift the detections by up to two contacts in either direction. In this example, shifting by **+1 contact** produces the correct result. You can also enable **Jump slices after electrode shift**, which automatically recenters the slice views on the selected contact after the shift.
 
 ![Wrong detections fixed](images/wrong_detections_fixed.png)
 

@@ -17,7 +17,8 @@ Automatically saves the following outputs:
         - `bolt_fiducials_autosave.fcsv`
     - Detected contact centers after running detection or after detection shifting:  
         - `contacts_autosave.fcsv`
-*(Default: True)*
+        
+    *(Default: True)*
 
 - **Auto-save path**  
 Directory where automatically generated files are saved.  

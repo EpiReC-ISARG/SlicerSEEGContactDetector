@@ -36,11 +36,11 @@ This is the most common scenario, in which a preoperative T1-weighted MRI and a 
 
 8. Click **Run** to execute the detection algorithm.
 
-9. An **Electrodes** node will be created in the **Data** module, and the detected contact centers will be displayed in the slice views and the 3D view. Verify that the detected contacts are correct.  
+9. An **Contacts** node will be created in the **Data** module, and the detected contact centers will be displayed in the slice views and the 3D view. Verify that the detected contacts are correct.  
    You can navigate through the contacts in the **Detected contact list** using the **down arrow key** or by clicking individual entries in the table.
 ![Detections](images/ct_t1/detections.png)
 
-10. If you are satisfied with the results, click **View in Scene** to visualize the detected electrode centers overlaid on the T1w image.
+10. If you are satisfied with the results, click **View in Scene** to visualize the detected contact centers overlaid on the T1w image.
 ![View in Scene](images/ct_t1/view_in_scene.png)
 
 ---
@@ -49,7 +49,7 @@ This is the most common scenario, in which a preoperative T1-weighted MRI and a 
 
 If a brain mask segmentation in CT space is already available, follow the same procedure as described above, but load the CT volume and the CT brain mask segmentation instead of a T1w volume. Select these as the input data in the **SEEG Contact Detector** module and skip the brain mask generation step.
 
-Create anchor bolt fiducials as described above and run the detection to generate the **Electrodes** point list.
+Create anchor bolt fiducials as described above and run the detection to generate the **Contacts** point list.
 
 ---
 
@@ -62,3 +62,21 @@ You can also use a custom Point List containing anchor bolt positions defined in
 3. Load the custom bolt fiducials and select them as the input **Bolt fiducials**.
 4. Verify that the fiducial labels follow the required naming convention, including the correct number of contacts.
 5. Run the detection algorithm and inspect the results.
+
+---
+
+## Convert Contacts from CT to T1 Space
+
+When a T1-weighted image is provided as input and the brain mask is generated using the **Create from T1** option, the module creates transformation nodes in addition to the brain mask. Specifically, a transform from **T1 to CT** and its inverse (**CT to T1**) are generated automatically.
+
+After running the detection and creating the **Contacts** node, the detected contact coordinates are stored in **CT space**. You can visualize the contacts in **T1 space** by enabling **View in Scene**. However, if you want to **save** the detections in T1 space, the transform must be **hardened** on the **Contacts** node before saving.
+
+The module also automatically saves a backup of the transforms in the same directory as the input CT volume. After brain mask generation, the file `transform_T1_to_CT_autosave.h5` is created, which contains the transform from **T1 to CT**.
+
+If you have saved the **Contacts**  node and want to convert the contacts to T1 space later, follow these steps:
+
+1. Load the transform file (`transform_T1_to_CT_autosave.h5`) into 3D Slicer.
+2. Right-click the transform node and select **Invert transform** to obtain the **CT to T1** transform.
+3. Apply the inverted transform to the **Contacts**  node.
+4. Harden the transform on the **Contacts** node.
+5. Save the **Contacts** node to store the contact coordinates in T1 space.

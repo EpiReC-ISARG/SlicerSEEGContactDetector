@@ -950,7 +950,7 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
 
         # prepare markups
         markupsNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
-        markupsNode.SetName(slicer.mrmlScene.GenerateUniqueName("Electrodes"))
+        markupsNode.SetName(slicer.mrmlScene.GenerateUniqueName("Contacts"))
 
         # get number of offset points to find the best fit
         n_offsets = np.ceil((contact_length_mm + contact_gap_mm) / 0.1).astype(int)

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.3...3.19.7 FATAL_ERROR)
 
-project(SlicerSEEGContactDetector)
+project(SEEGContactDetector)
 
 #-----------------------------------------------------------------------------
 # Extension meta-information
@@ -9,7 +9,7 @@ set(EXTENSION_CONTRIBUTORS "Jakub Smid (CTU in Prague, Charles University), Rade
 set(EXTENSION_DESCRIPTION "SEEG Contact Detector is a 3D Slicer extension for automatic localization of SEEG electrode contact centers from post-implantation CT data. The module uses a model-based approach that respects electrode geometry and accounts for bending, twisting, and partial contact visibility. It supports optional MRI-based brain masking, manual correction tools, and interactive visualization for efficient clinical review.")
 set(EXTENSION_ICONURL "https://raw.githubusercontent.com/EpiReC-ISARG/SlicerSEEGContactDetector/refs/heads/main/ContactDetector.png")
 set(EXTENSION_SCREENSHOTURLS "https://raw.githubusercontent.com/EpiReC-ISARG/SlicerSEEGContactDetector/refs/heads/main/Screenshot01.png https://raw.githubusercontent.com/EpiReC-ISARG/SlicerSEEGContactDetector/refs/heads/main/Screenshot02.png")
-set(EXTENSION_DEPENDS "HDBrainExtractionTool") # Specified as a list or "NA" if no dependencies
+set(EXTENSION_DEPENDS "HDBrainExtraction") # Specified as a list or "NA" if no dependencies
 
 #-----------------------------------------------------------------------------
 # Extension dependencies

@@ -2,7 +2,7 @@
 
 The **SEEG Contact Detector** is a 3D Slicer extension that enables precise localization of SEEG electrode contact centers from post-implantation CT data.
 
-![Detection toggle](images/detection_toggle.gif)
+![Detection](images/detection.gif)
 
 The extension addresses the challenges of post-surgical electrode localization by combining model-based detection with advanced geometric fitting. Unlike manual annotation or simple linear models, the proposed approach respects the physical electrode model (fixed contact spacing and electrode length) and accounts for electrode bending and twisting using a 5th-degree polynomial fit. This makes the extension particularly suitable for clinical datasets where electrodes deviate from their planned trajectories due to surgical factors.
 

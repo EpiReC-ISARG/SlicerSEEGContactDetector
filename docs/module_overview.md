@@ -69,13 +69,17 @@ You may rename electrodes, but the naming convention **must be preserved**. The 
 
 Once all anchor bolts are correctly labeled, click **Run** to start the detection process.
 
-After completion, a new Markups node named **Electrodes** is created. This node contains the estimated centers of the contacts for each electrode, named using the format: `[label][contact_index]`, where `contact_index` denotes the contact position starting from the **tip of the electrode** toward the **entry point**.
+After the process completes, a new Markup node named **Contacts** is created. This node contains the estimated centers of the contacts for each electrode, named using the format: `[label][contact_index]`, where `contact_index` denotes the contact position starting from the **tip of the electrode** toward the **entry point**.
 
 ![Detected contacts](images/detections.png "Detected contacts")
 
-The detected contact list is automatically expanded, allowing you to view the coordinates of all contacts. Selecting a contact in the list automatically refocuses the slice views on its location. You can also use the **down arrow key** to navigate sequentially through the detected contacts. This makes it quick and easy to visually inspect all detections.
+The Detected contact list is automatically expanded, allowing you to view the coordinates of all contacts. Selecting a contact in the list automatically refocuses the slice views on its location. You can also use the **down arrow key** to navigate sequentially through the detected contacts. This makes it quick and easy to visually inspect all detections.
 
-![Detected contact list](images/detections_list.png)
+![Detected contact list](images/detected_contact_list.png)
+
+The Current contact list displays the name of the corresponding Markup node, which can also be found in the Data module. This Markups node contains all detected contact centers and can be saved, hidden, or deleted as needed.
+
+When **Projection Visibility** is enabled, all detected contacts are displayed in the slice views, including those not located in the currently visible slice. When **Projection Visibility** is disabled, only contacts intersecting the current slice are shown.
 
 If some detected contacts are misaligned, the module provides options to manually adjust the results. Please refer to the **[Troubleshooting](troubleshooting.md)** section for detailed instructions.
 
@@ -83,7 +87,7 @@ If some detected contacts are misaligned, the module provides options to manuall
 
 ## View in Scene
 
-The **View in Scene** button configures the scene for rapid visual inspection of detected electrodes, primarily intended for radiologists and neurologists.
+The **View in Scene** button configures the scene for rapid visual inspection of detected contacts, primarily intended for radiologists and neurologists.
 
 ![Detections after View in Scene](images/view_in_scene.png)
 
@@ -98,7 +102,7 @@ When activated:
 - Thresholding is enabled so that only metallic structures are visible
 - The brain mask and input bolt fiducials are hidden
 
-If the brain mask was generated using **Create from T1** and a **Transform CT to T1** exists, this transform is applied so that the CT, brain mask, bolt fiducials, and detected electrodes are all displayed in **T1 space**.
+If the brain mask was generated using **Create from T1** and a **Transform CT to T1** exists, this transform is applied so that the CT, brain mask, bolt fiducials, and detected contacts are all displayed in **T1 space**.
 
 When **View in Scene** is deactivated:
 

@@ -2,7 +2,9 @@
 
 **SEEG Contact Detector** is a 3D Slicer extension for automatic and accurate localization of SEEG electrode contact centers from post-implantation CT data. The extension is designed to handle electrode bending, twisting, and partial contact visibility while respecting the physical electrode model.
 
-📘 **Documentation**  
+![Detection](docs/images/detection.gif)
+
+📘 **See the documentation for details**
 👉 https://epirec-isarg.github.io/SlicerSEEGContactDetector/
 
 ---

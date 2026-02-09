@@ -206,6 +206,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         self.electrodes: list[Electrode] = []
         self.bolt_list_selected_index = 0
         self.detected_list_selected_electrode = None
+        self.detected_list_selected_index = 0
         self.detected_list_markup_node = None
 
         self.transformNodeInv = None # keep pointer to the CT to T1 transform node (needed in View in Scene)
@@ -261,6 +262,8 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
         self.ui.buttonHideDetectedContacts.setIcon(self.icon_visible)
         self.ui.buttonHideDetectedContacts.connect("clicked(bool)", self.onHideDetectedContactsClicked)
 
+        self.ui.checkBoxProjectionVisibility.connect("clicked(bool)", self.onCheckBoxProjectionVisibilityClicked)
+
         self.ui.buttonRun.connect("clicked(bool)", self.onRunClicked)
         self.ui.buttonViewInScene.connect("clicked(bool)", self.onViewInSceneClicked)
 
@@ -274,6 +277,12 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
+
+    def onCheckBoxProjectionVisibilityClicked(self, checked):
+        if checked:
+            self.detected_list_markup_node.GetDisplayNode().SliceProjectionOn()
+        else:
+            self.detected_list_markup_node.GetDisplayNode().SliceProjectionOff()
 
     def onDeleteDetectedContactsClicked(self):
         if self.detected_list_markup_node:
@@ -376,6 +385,19 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
             return
 
         with slicer.util.RenderBlocker():
+            # transform CT to T1
+            if self.transformNodeInv:
+                if self._parameterNode.inputCT:
+                    self._parameterNode.inputCT.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
+                if self._parameterNode.brainMask:
+                    self._parameterNode.brainMask.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
+                if self._parameterNode.inputT1:
+                    self._parameterNode.inputT1.SetAndObserveTransformNodeID(None)
+                if self._parameterNode.boltFiducials:
+                    self._parameterNode.boltFiducials.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
+                if self.detected_list_markup_node:
+                    self.detected_list_markup_node.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
+
             if self._parameterNode.inputCT:
                 # get intensity range of inputCT
                 scalar_range = self._parameterNode.inputCT.GetImageData().GetScalarRange()
@@ -418,19 +440,6 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
             if self.detected_list_markup_node:
                 self.detected_list_markup_node.SetDisplayVisibility(True)
 
-            # transform CT to T1
-            if self.transformNodeInv:
-                if self._parameterNode.inputCT:
-                    self._parameterNode.inputCT.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
-                if self._parameterNode.brainMask:
-                    self._parameterNode.brainMask.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
-                if self._parameterNode.inputT1:
-                    self._parameterNode.inputT1.SetAndObserveTransformNodeID(None)
-                if self._parameterNode.boltFiducials:
-                    self._parameterNode.boltFiducials.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
-                if self.detected_list_markup_node:
-                    self.detected_list_markup_node.SetAndObserveTransformNodeID(self.transformNodeInv.GetID())
-
     def onRunClicked(self):
         progressbar = slicer.util.createProgressDialog(windowTitle="Detecting contacts")
         progressbar.setCancelButton(None)
@@ -462,6 +471,8 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                                     self._parameterNode.contactGap_mm,
                                     self._parameterNode.autoSave,
                                     self.ui.pathLineEditSavePath.currentPath)
+        if self.ui.checkBoxJumpSlicesShift.isChecked():
+            slicer.modules.markups.logic().JumpSlicesToNthPointInMarkup(self.detected_list_markup_node.GetID(), self.detected_list_selected_index, True)
         
     def onSpinBoxShiftElectrodeByContactChanged(self, spin_box_value):
         self.detected_list_selected_electrode.shift_fiducials_value = spin_box_value
@@ -472,8 +483,11 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                                     self._parameterNode.contactGap_mm,
                                     self._parameterNode.autoSave,
                                     self.ui.pathLineEditSavePath.currentPath)
+        if self.ui.checkBoxJumpSlicesShift.isChecked():
+            slicer.modules.markups.logic().JumpSlicesToNthPointInMarkup(self.detected_list_markup_node.GetID(), self.detected_list_selected_index, True)
 
     def onMarkupsWidgetEstimatedContactsSelectionChanged(self, markupIndex):
+        self.detected_list_selected_index = markupIndex
         selected_label = self.detected_list_markup_node.GetNthControlPointLabel(markupIndex)
         selected_label = re.sub(r"\d+$", "", selected_label) # remove trailing number
 
@@ -536,6 +550,10 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
 
         # update markup display
         self.detected_list_markup_node.GetDisplayNode().SetGlyphTypeFromString("ThickCross2D")
+        self.detected_list_markup_node.GetDisplayNode().SliceProjectionUseFiducialColorOff()
+        self.detected_list_markup_node.GetDisplayNode().SetSliceProjectionColor(0.0, 0.0, 0.0)
+        if self.ui.checkBoxProjectionVisibility.isChecked():
+            self.detected_list_markup_node.GetDisplayNode().SliceProjectionOn()
         self.addObserver(self.detected_list_markup_node, vtk.vtkCommand.ModifiedEvent, self.onDetectedListMarkupNodeModified)
         self.onDetectedListMarkupNodeModified(None, None)
 
@@ -1005,7 +1023,7 @@ class SEEGContactDetectorLogic(ScriptedLoadableModuleLogic):
 
         # prepare markups
         markupsNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
-        markupsNode.SetName(slicer.mrmlScene.GenerateUniqueName("Electrodes"))
+        markupsNode.SetName(slicer.mrmlScene.GenerateUniqueName("Contacts"))
 
         # get number of offset points to find the best fit
         n_offsets = np.ceil((contact_length_mm + contact_gap_mm) / 0.1).astype(int)

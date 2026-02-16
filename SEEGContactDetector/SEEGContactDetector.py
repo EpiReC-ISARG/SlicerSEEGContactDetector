@@ -357,7 +357,7 @@ class SEEGContactDetectorWidget(ScriptedLoadableModuleWidget, VTKObservationMixi
                 self.onRunClicked()
 
                 # save results
-                estimated_contacts = slicer.util.getNode("Electrodes*")
+                estimated_contacts = slicer.util.getNode("Contacts*")
                 slicer.util.saveNode(estimated_contacts, os.path.join(root, "ContactDetector.mrk.json"))
 
                 # cleanup

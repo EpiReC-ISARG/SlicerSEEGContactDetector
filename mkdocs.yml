@@ -10,6 +10,7 @@ plugins:
 nav:
   - Home: index.md
   - Installation: installation.md
+  - Tutorial Video: tutorial_video.md
   - Module Overview: module_overview.md
   - Sample Data: sample_data.md
   - Usage: usage.md

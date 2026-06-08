@@ -35,11 +35,10 @@ class SEEGContactDetector(ScriptedLoadableModule):
         self.parent.title = _("SEEG Contact Detector")
         self.parent.categories = [translate("qSlicerAbstractCoreModule", "IGT")] # set categories (folders where the module shows up in the module selector)
         self.parent.dependencies = ["HDBrainExtractionTool"]  # add here list of module names that this module requires
-        self.parent.contributors = ["Jakub Smid (CTU in Prague, Charles University)", "Radek Janca (CTU in Prague)"]
-        # TODO: update with short description of the module and a link to online module documentation
+        self.parent.contributors = ["Jakub Smid (CTU in Prague, Charles University)", "Petr Jezdik (CTU in Prague)", "Radek Janca (CTU in Prague)"]
         # _() function marks text as translatable to other languages
         self.parent.helpText = _("""
-SEEG Contact Detector is a 3D Slicer extension for automatic localization of SEEG electrode contact centers from post-implantation CT data. The module uses a model-based approach that respects electrode geometry and accounts for bending, twisting, and partial contact visibility. It supports optional MRI-based brain masking, manual correction tools, and interactive visualization for efficient clinical review.
+SEEG Contact Detector is a extension for automatic localization of stereoelectroencephalography electrode contact centers from post-implantation CT data. The module uses a model-based approach that respects electrode geometry and accounts for bending, twisting, and partial contact visibility. It supports optional MRI-based brain masking, manual correction tools, and interactive visualization for efficient clinical review.
 See more information in <a href="https://epirec-isarg.github.io/SlicerSEEGContactDetector/">module documentation</a>.
 """)
         # organization, grant and thanks

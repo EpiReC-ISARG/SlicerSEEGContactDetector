@@ -4,6 +4,16 @@ If you are not satisfied with the results, or if the detection algorithm produce
 
 ---
 
+## Fiducials Do Not Snap to the Rendered Surface
+
+When placing an anchor bolt fiducial in the 3D Rendering View, the fiducial should snap to the rendered surface. If the fiducial is instead placed in empty space or does not align with the rendered structures, verify the volume rendering settings.
+
+Open the **Volume Rendering** module in 3D Slicer and ensure that the rendering method is set to either **VTK CPU Ray Casting** or **VTK GPU Ray Casting**. Fiducial placement directly on rendered surfaces is currently not supported when using the experimental **VTK Multi-Volume** rendering mode.
+
+After switching to one of the supported rendering methods, placing fiducials on the rendered surface should work as expected.
+
+---
+
 ## Manual Electrode Tip
 
 When some contacts are not visible in the CT (e.g., contacts are shadowed or obscured by X-ray artifacts), the algorithm may fail to fit the electrode correctly. In such cases, it is not possible to find a configuration in which all modeled contacts align with metallic structures in the CT.
@@ -56,17 +66,17 @@ Increasing the value shifts the electrode outward (toward the bolt), while decre
 
 ## Non-Electrode Metal in the CT
 
-If the CT scan contains metallic objects such as skull clips, dental fillings, or other implants that are not SEEG electrodes or anchor bolts, special attention must be paid to the brain mask.
+If the CT scan contains metallic objects such as cranial interlink plates, dental fillings, or other implants that are not SEEG electrodes or anchor bolts, special attention must be paid to the brain mask.
 
 All non-SEEG metallic structures must be excluded from the brain mask. Any metal included in the brain mask may be incorrectly assigned to an electrode, causing the polynomial fit to be attracted to these false structures.
 
-![Clip in the CT](images/clip.png)
+![Cranial interlink plate in the CT](images/interlink_plate.png)
 
 To correct this issue, switch to the **Segment Editor** module and edit the brain mask segmentation. Use the **Erase** tool to remove unwanted metallic structures. You may adjust the brush size or use the **Sphere brush** for convenience.
 
 Precise editing is not required, but all SEEG electrode contacts must remain included in the brain mask.
 
-![Clip in the CT fixed](images/clip_fixed.png)
+![Cranial interlink plate in the CT fixed](images/interlink_plate_fixed.png)
 
 ---
 

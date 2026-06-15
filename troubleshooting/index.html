@@ -447,17 +447,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#fiducials-do-not-snap-to-the-rendered-surface" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fiducials Do Not Snap to the Rendered Surface
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#manual-electrode-tip" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -591,17 +580,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#fiducials-do-not-snap-to-the-rendered-surface" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fiducials Do Not Snap to the Rendered Surface
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#manual-electrode-tip" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -696,11 +674,6 @@
 <h1 id="troubleshooting">Troubleshooting</h1>
 <p>If you are not satisfied with the results, or if the detection algorithm produces an error or warning, the following methods can help you correct or improve the detections.</p>
 <hr>
-<h2 id="fiducials-do-not-snap-to-the-rendered-surface">Fiducials Do Not Snap to the Rendered Surface</h2>
-<p>When placing an anchor bolt fiducial in the 3D Rendering View, the fiducial should snap to the rendered surface. If the fiducial is instead placed in empty space or does not align with the rendered structures, verify the volume rendering settings.</p>
-<p>Open the <strong>Volume Rendering</strong> module in 3D Slicer and ensure that the rendering method is set to either <strong>VTK CPU Ray Casting</strong> or <strong>VTK GPU Ray Casting</strong>. Fiducial placement directly on rendered surfaces is currently not supported when using the experimental <strong>VTK Multi-Volume</strong> rendering mode.</p>
-<p>After switching to one of the supported rendering methods, placing fiducials on the rendered surface should work as expected.</p>
-<hr>
 <h2 id="manual-electrode-tip">Manual Electrode Tip</h2>
 <p>When some contacts are not visible in the CT (e.g., contacts are shadowed or obscured by X-ray artifacts), the algorithm may fail to fit the electrode correctly. In such cases, it is not possible to find a configuration in which all modeled contacts align with metallic structures in the CT.</p>
 <p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../images/contacts_shadow.png" data-desc-position="bottom"><img alt="Missing contact" src="../images/contacts_shadow.png"></a></p>
@@ -729,12 +702,12 @@
 <p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../images/microsteps.gif" data-desc-position="bottom"><img alt="Microsteps" src="../images/microsteps.gif"></a></p>
 <hr>
 <h2 id="non-electrode-metal-in-the-ct">Non-Electrode Metal in the CT</h2>
-<p>If the CT scan contains metallic objects such as cranial interlink plates, dental fillings, or other implants that are not SEEG electrodes or anchor bolts, special attention must be paid to the brain mask.</p>
+<p>If the CT scan contains metallic objects such as skull clips, dental fillings, or other implants that are not SEEG electrodes or anchor bolts, special attention must be paid to the brain mask.</p>
 <p>All non-SEEG metallic structures must be excluded from the brain mask. Any metal included in the brain mask may be incorrectly assigned to an electrode, causing the polynomial fit to be attracted to these false structures.</p>
-<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../images/interlink_plate.png" data-desc-position="bottom"><img alt="Cranial interlink plate in the CT" src="../images/interlink_plate.png"></a></p>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../images/clip.png" data-desc-position="bottom"><img alt="Clip in the CT" src="../images/clip.png"></a></p>
 <p>To correct this issue, switch to the <strong>Segment Editor</strong> module and edit the brain mask segmentation. Use the <strong>Erase</strong> tool to remove unwanted metallic structures. You may adjust the brush size or use the <strong>Sphere brush</strong> for convenience.</p>
 <p>Precise editing is not required, but all SEEG electrode contacts must remain included in the brain mask.</p>
-<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../images/interlink_plate_fixed.png" data-desc-position="bottom"><img alt="Cranial interlink plate in the CT fixed" src="../images/interlink_plate_fixed.png"></a></p>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../images/clip_fixed.png" data-desc-position="bottom"><img alt="Clip in the CT fixed" src="../images/clip_fixed.png"></a></p>
 <hr>
 <h2 id="bolt-fiducials-are-too-close-to-each-other">Bolt Fiducials Are Too Close to Each Other</h2>
 <p>When placing bolt fiducials, ensure that they are sufficiently spaced apart. The default value of the <strong>Radius around the bolt</strong> parameter is <strong>5 mm</strong>, and the largest metallic structure within this radius is used for linear approximation of the electrode trajectory.</p>

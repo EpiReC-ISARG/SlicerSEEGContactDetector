@@ -9,7 +9,7 @@
         <link rel="prev" href="..">
       
       
-        <link rel="next" href="../module_overview/">
+        <link rel="next" href="../tutorial_video/">
       
       
         
@@ -312,15 +312,26 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#option-1-using-source-code" class="md-nav__link">
+  <a href="#option-1-installation-via-extension-manager" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Option 1: Using Source Code
+        Option 1: Installation via Extension Manager
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Option 1: Using Source Code">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#option-2-using-source-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Using Source Code
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Option 2: Using Source Code">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -350,21 +361,37 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#option-2-installation-via-extension-manager-planned" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Option 2: Installation via Extension Manager (planned)
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial_video/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial Video
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -558,15 +585,26 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#option-1-using-source-code" class="md-nav__link">
+  <a href="#option-1-installation-via-extension-manager" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Option 1: Using Source Code
+        Option 1: Installation via Extension Manager
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Option 1: Using Source Code">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#option-2-using-source-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Using Source Code
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Option 2: Using Source Code">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -596,17 +634,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#option-2-installation-via-extension-manager-planned" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Option 2: Installation via Extension Manager (planned)
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -628,7 +655,16 @@
 
 
 <h1 id="installation">Installation</h1>
-<h2 id="option-1-using-source-code">Option 1: Using Source Code</h2>
+<h2 id="option-1-installation-via-extension-manager">Option 1: Installation via Extension Manager</h2>
+<p>The recommended way to install the SEEG Contact Detector extension is through the 3D Slicer Extension Manager. This is the preferred method for end users.</p>
+<ol>
+<li>In 3D Slicer, navigate to <strong>View → Extension Manager</strong>.</li>
+<li>Open the <strong>Install Extensions</strong> tab and search for SEEG Contact Detector.</li>
+<li>Click <strong>Install</strong>, then restart 3D Slicer when prompted.</li>
+<li>The SEEG Contact Detector module will then appear in the list of available modules.</li>
+</ol>
+<p>For quicker access, the module can be added to the toolbar. Navigate to <strong>Edit → Application Settings → Modules</strong>, locate <em>SEEG Contact Detector</em> in the module list, and drag and drop it into the <strong>Favorite Modules</strong> section. The module icon will then appear in the toolbar.</p>
+<h2 id="option-2-using-source-code">Option 2: Using Source Code</h2>
 <p>This method allows you to install the extension directly <strong>without using the Extension Manager</strong> and is the <strong>recommended approach for development.</strong></p>
 <h3 id="dependencies">Dependencies</h3>
 <p>SEEG Contact Detector depends on one external module that must be installed <strong>manually via the 3D Slicer Extension Manager</strong> before loading this extension. If this dependency is missing, SEEG Contact Detector will not load correctly.</p>
@@ -639,7 +675,7 @@
 <h3 id="load-the-extension">Load the Extension</h3>
 <ol>
 <li>Download the source code from GitHub: <a href="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector">https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector</a>.
-It is recommended to use a stable release or the latest commit on the master branch that represents the current stable version.</li>
+It is recommended to use a <a href="https://github.com/EpiReC-ISARG/SlicerSEEGContactDetector/releases">stable release</a> or the latest commit on the main branch that represents the current stable version.</li>
 <li>Unzip the downloaded archive.</li>
 <li>Launch 3D Slicer and drag-and-drop the folder containing the extension source code into the 3D Slicer application window.</li>
 <li>When prompted, select <code>Add Python scripted modules to the application</code>.</li>
@@ -647,7 +683,6 @@ It is recommended to use a stable release or the latest commit on the master bra
 <li>When you start detection first time, you will be prompted to install the externa</li>
 </ol>
 <p>If needed, you can later modify the extension path in: Edit → Application Settings → Modules → Additional module paths.</p>
-<h2 id="option-2-installation-via-extension-manager-planned">Option 2: Installation via Extension Manager (planned)</h2>
 
 
 

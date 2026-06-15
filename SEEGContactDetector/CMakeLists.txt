@@ -8,6 +8,9 @@ set(MODULE_PYTHON_SCRIPTS
 
 set(MODULE_PYTHON_RESOURCES
   Resources/Icons/${MODULE_NAME}.png
+  Resources/Icons/Bolt_fiducials.png
+  Resources/Icons/CT_with_SEEG_electrodes.png
+  Resources/Icons/Preoperative_T1.png
   Resources/UI/${MODULE_NAME}.ui
   )
 

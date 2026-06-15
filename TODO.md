@@ -52,7 +52,7 @@
 - [x] GitHub description
 - [x] Check CMakeLists
 - [x] Unify extension and module names
-- [ ] EN short video
+- [x] EN short video
 - [x] EN documentation
 
 # Testing
